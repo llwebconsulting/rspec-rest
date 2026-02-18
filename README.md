@@ -1,2 +1,3 @@
 # rspec-rest
-DSL for testing REST APIs with RSpec
+
+Rack::Test + RSpec DSL for concise REST API testing.
