@@ -25,7 +25,9 @@ module RSpec
       end
 
       def json
-        @json ||= JSON.parse(body)
+        return @json if instance_variable_defined?(:@json)
+
+        @json = JSON.parse(body)
       rescue JSON::ParserError => e
         snippet = body[0, 200]
         raise InvalidJsonError, "Failed to parse JSON response: #{e.message}. Body snippet: #{snippet.inspect}"
