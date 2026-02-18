@@ -3,6 +3,8 @@
 require "json"
 require "rack/test"
 require "rack/utils"
+require_relative "errors"
+require_relative "response"
 
 module RSpec
   module Rest
@@ -34,6 +36,7 @@ module RSpec
           method: method.to_s.upcase,
           path: request_path,
           headers: request_headers,
+          env: rack_env_headers,
           body: request_payload
         }
 
