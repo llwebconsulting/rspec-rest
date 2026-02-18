@@ -9,6 +9,8 @@ require_relative "response"
 module RSpec
   module Rest
     class Session
+      SUPPORTED_HTTP_METHODS = %i[get post put patch delete].freeze
+
       attr_reader :config, :last_request
 
       def initialize(config)
@@ -19,6 +21,7 @@ module RSpec
       end
 
       def request(method:, path:, **options)
+        method = validate_http_method!(method)
         resource_path = options[:resource_path]
         headers = options[:headers]
         query = options[:query]
@@ -33,14 +36,14 @@ module RSpec
         request_payload = build_payload(json: json, params: params)
 
         @last_request = {
-          method: method.to_s.upcase,
+          method: method.upcase,
           path: request_path,
           headers: request_headers,
           env: rack_env_headers,
           body: request_payload
         }
 
-        @rack_session.public_send(method.to_sym, request_path, request_payload, rack_env_headers)
+        @rack_session.public_send(method, request_path, request_payload, rack_env_headers)
         response
       end
 
@@ -54,6 +57,15 @@ module RSpec
         return unless config.app.nil?
 
         raise MissingAppError, "Config#app is required to initialize RSpec::Rest::Session"
+      end
+
+      def validate_http_method!(method)
+        normalized = method.to_s.downcase
+        return normalized if SUPPORTED_HTTP_METHODS.include?(normalized.to_sym)
+
+        supported = SUPPORTED_HTTP_METHODS.map(&:to_s).join(", ")
+        raise UnsupportedHttpMethodError,
+              "Unsupported HTTP method: #{method.inspect}. Supported methods: #{supported}"
       end
 
       def build_headers(request_headers, include_json_content_type:)

@@ -7,5 +7,7 @@ module RSpec
     class MissingAppError < Error; end
 
     class InvalidJsonError < Error; end
+
+    class UnsupportedHttpMethodError < Error; end
   end
 end

@@ -102,6 +102,18 @@ RSpec.describe RSpec::Rest::Session do
         "X-Trace-Id" => "trace-123"
       )
     end
+
+    it "raises a clear error for unsupported HTTP methods" do
+      config = RSpec::Rest::Config.new(app: RackApp.new)
+      session = described_class.new(config)
+
+      expect do
+        session.request(method: :fetch, path: "/v1/users")
+      end.to raise_error(
+        RSpec::Rest::UnsupportedHttpMethodError,
+        /Unsupported HTTP method: :fetch. Supported methods: get, post, put, patch, delete/
+      )
+    end
   end
 
   describe "initialization" do
