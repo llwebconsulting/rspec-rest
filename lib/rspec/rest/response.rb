@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "errors"
 
 module RSpec
   module Rest
