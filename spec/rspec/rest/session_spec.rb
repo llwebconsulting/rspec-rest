@@ -3,6 +3,17 @@
 require "spec_helper"
 
 RSpec.describe RSpec::Rest::Session do
+  let(:header_echo_app) do
+    lambda do |env|
+      body = {
+        "accept" => env["HTTP_ACCEPT"],
+        "content_type" => env["CONTENT_TYPE"],
+        "trace_id" => env["HTTP_X_TRACE_ID"]
+      }
+      [200, { "Content-Type" => "application/json" }, [JSON.dump(body)]]
+    end
+  end
+
   describe "#request" do
     it "performs a GET request and parses JSON through Response#json" do
       config = RSpec::Rest::Config.new(app: RackApp.new)
@@ -54,6 +65,42 @@ RSpec.describe RSpec::Rest::Session do
       expect(response.json["email"]).to eq("milestone1@example.com")
       expect(session.last_request[:headers]["Accept"]).to eq("application/json")
       expect(session.last_request[:headers]["Content-Type"]).to eq("application/json")
+    end
+
+    it "normalizes outgoing headers to rack env keys for the downstream app" do
+      config = RSpec::Rest::Config.new(app: header_echo_app, base_headers: { "Accept" => "application/json" })
+      session = described_class.new(config)
+
+      response = session.request(
+        method: :post,
+        path: "/",
+        headers: { "X-Trace-Id" => "trace-123" },
+        json: { "test" => true }
+      )
+
+      expect(response.json).to include(
+        "accept" => "application/json",
+        "content_type" => "application/json",
+        "trace_id" => "trace-123"
+      )
+    end
+
+    it "keeps last_request headers human-friendly" do
+      config = RSpec::Rest::Config.new(app: header_echo_app, base_headers: { "Accept" => "application/json" })
+      session = described_class.new(config)
+
+      session.request(
+        method: :post,
+        path: "/",
+        headers: { "X-Trace-Id" => "trace-123" },
+        json: { "test" => true }
+      )
+
+      expect(session.last_request[:headers]).to include(
+        "Accept" => "application/json",
+        "Content-Type" => "application/json",
+        "X-Trace-Id" => "trace-123"
+      )
     end
   end
 

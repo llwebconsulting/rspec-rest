@@ -27,6 +27,7 @@ module RSpec
         request_path = append_query(request_path, query)
 
         request_headers = build_headers(headers, include_json_content_type: !json.nil?)
+        rack_env_headers = build_rack_env_headers(request_headers)
         request_payload = build_payload(json: json, params: params)
 
         @last_request = {
@@ -36,7 +37,7 @@ module RSpec
           body: request_payload
         }
 
-        @rack_session.public_send(method.to_sym, request_path, request_payload, request_headers)
+        @rack_session.public_send(method.to_sym, request_path, request_payload, rack_env_headers)
         response
       end
 
@@ -71,6 +72,19 @@ module RSpec
         return JSON.dump(json) unless json.nil?
 
         params || {}
+      end
+
+      def build_rack_env_headers(headers)
+        headers.transform_keys { |key| normalize_header_key(key) }
+      end
+
+      def normalize_header_key(key)
+        key_str = key.to_s
+        return key_str if key_str.start_with?("HTTP_", "CONTENT_TYPE", "CONTENT_LENGTH", "rack.")
+        return "CONTENT_TYPE" if key_str.casecmp("Content-Type").zero?
+        return "CONTENT_LENGTH" if key_str.casecmp("Content-Length").zero?
+
+        "HTTP_#{key_str.tr('-', '_').upcase}"
       end
 
       def append_query(path, query)
