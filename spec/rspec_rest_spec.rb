@@ -42,6 +42,15 @@ RSpec.describe RSpec::Rest do
     parsed = JSON.parse(body.join)
     expect(parsed["id"]).to eq(3)
     expect(parsed["email"]).to eq("carl@example.com")
+
+    # Verify that the created user is actually persisted
+    get_status, get_headers, get_body = call_app(app, method: "GET", path: "/v1/users/3")
+
+    expect(get_status).to eq(200)
+    expect(get_headers["Content-Type"]).to eq("application/json")
+    get_parsed = JSON.parse(get_body.join)
+    expect(get_parsed["id"]).to eq(3)
+    expect(get_parsed["email"]).to eq("carl@example.com")
   end
 
   it "returns a single user from GET /v1/users/:id" do
