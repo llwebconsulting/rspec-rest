@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "config"
+require_relative "errors"
 require_relative "session"
 module RSpec
   module Rest
@@ -98,11 +99,13 @@ module RSpec
         end
 
         def rest_response
+          ensure_request_context!
           execute_rest_request_if_pending
           @rest_response
         end
 
         def last_request
+          ensure_request_context!
           execute_rest_request_if_pending
           rest_session.last_request
         end
@@ -149,6 +152,7 @@ module RSpec
         end
 
         def execute_rest_request_if_pending
+          ensure_request_context!
           return if @rest_request_executed
 
           execute_rest_request
@@ -159,11 +163,15 @@ module RSpec
             rest_request_state[:path],
             rest_request_state[:path_params]
           )
+          request_resource_path = apply_path_params(
+            rest_request_state[:resource_path],
+            rest_request_state[:path_params]
+          )
 
           @rest_response = rest_session.request(
             method: rest_request_state[:method],
             path: request_path,
-            resource_path: rest_request_state[:resource_path],
+            resource_path: request_resource_path,
             headers: rest_request_state[:headers],
             query: rest_request_state[:query],
             json: rest_request_state[:json]
@@ -173,10 +181,18 @@ module RSpec
 
         def rest_request_state
           unless defined?(@rest_request_state) && @rest_request_state
-            raise "REST request state accessed before a request was started. Ensure a REST request is started before setting headers, query, json, or path params."
+            raise MissingRequestContextError,
+                  "REST request context is not initialized. Call this inside a verb block (get/post/put/patch/delete)."
           end
 
           @rest_request_state
+        end
+
+        def ensure_request_context!
+          return if defined?(@rest_request_state) && @rest_request_state
+
+          raise MissingRequestContextError,
+                "No active REST request context. Call this inside a verb block (get/post/put/patch/delete)."
         end
 
         def apply_path_params(path, params)

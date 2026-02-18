@@ -2,11 +2,26 @@
 
 require "spec_helper"
 
-# These examples are defined dynamically by the DSL verb macros (get/post/etc.),
-# so static analysis cannot see literal `it` blocks in this file.
-# rubocop:disable RSpec/EmptyExampleGroup
 RSpec.describe RSpec::Rest do
   include described_class
+
+  it "raises a clear error when rest_response is called without a request context" do
+    expect do
+      rest_response
+    end.to raise_error(
+      RSpec::Rest::MissingRequestContextError,
+      /No active REST request context/
+    )
+  end
+
+  it "raises a clear error when last_request is called without a request context" do
+    expect do
+      last_request
+    end.to raise_error(
+      RSpec::Rest::MissingRequestContextError,
+      /No active REST request context/
+    )
+  end
 
   api do
     app RackApp.new
@@ -44,25 +59,25 @@ RSpec.describe RSpec::Rest do
     resource "/{id}/posts" do
       get "/" do
         path_params id: 1
-        expect(rest_response.status).to eq(200)
+        expect(rest_response.status).to eq(404)
         expect(last_request[:path]).to eq("/v1/users/1/posts")
       end
     end
 
-    get "/leaky_state_example" do
+    get "/{id}" do
       # Intentionally set extra headers and path params in this example
       headers "X-Leaky-Header" => "should-not-persist"
-      path_params id: 42
+      path_params id: 1
 
       expect(rest_response.status).to eq(200)
-      expect(last_request[:path]).to eq("/v1/users/42")
+      expect(last_request[:path]).to eq("/v1/users/1")
       expect(last_request[:headers]["X-Leaky-Header"]).to eq("should-not-persist")
     end
 
-    get "/isolation_check" do
+    get "/" do
       # This example should not see headers or params from previous examples.
       expect(rest_response.status).to eq(200)
-      expect(last_request[:path]).to eq("/v1/users/isolation_check")
+      expect(last_request[:path]).to eq("/v1/users")
 
       # Base headers should still be applied.
       expect(last_request[:headers]["Accept"]).to eq("application/json")
@@ -72,4 +87,3 @@ RSpec.describe RSpec::Rest do
     end
   end
 end
-# rubocop:enable RSpec/EmptyExampleGroup

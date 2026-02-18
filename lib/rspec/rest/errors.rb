@@ -9,5 +9,7 @@ module RSpec
     class InvalidJsonError < Error; end
 
     class UnsupportedHttpMethodError < Error; end
+
+    class MissingRequestContextError < Error; end
   end
 end
