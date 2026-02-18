@@ -2,3 +2,11 @@
 # frozen_string_literal: true
 
 require "rspec/rest"
+
+# This executable is a placeholder for a future rspec-rest command-line interface.
+# It currently only loads the library and informs the user that the CLI
+# has not been implemented yet.
+
+if $PROGRAM_NAME == __FILE__
+  warn "rspec-rest: command-line interface is not yet implemented. This executable is a placeholder."
+end

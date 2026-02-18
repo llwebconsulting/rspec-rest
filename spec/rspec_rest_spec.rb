@@ -8,7 +8,7 @@ RSpec.describe RSpec::Rest do
     expect(RSpec::Rest::VERSION).not_to be_nil
   end
 
-  it "boots rack test app for milestone 0" do
+  it "successfully makes a GET request to the test Rack app and returns JSON" do
     app = RackApp.new
     status, headers, body = app.call(
       "REQUEST_METHOD" => "GET",
