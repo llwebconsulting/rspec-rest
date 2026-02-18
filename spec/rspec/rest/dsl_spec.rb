@@ -41,6 +41,14 @@ RSpec.describe RSpec::Rest do
       expect(last_request[:headers]["Content-Type"]).to eq("application/json")
     end
 
+    resource "/{id}/posts" do
+      get "/" do
+        path_params id: 1
+        expect(rest_response.status).to eq(200)
+        expect(last_request[:path]).to eq("/v1/users/1/posts")
+      end
+    end
+
     get "/leaky_state_example" do
       # Intentionally set extra headers and path params in this example
       headers "X-Leaky-Header" => "should-not-persist"
