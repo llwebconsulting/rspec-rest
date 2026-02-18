@@ -63,8 +63,8 @@ RSpec.describe RSpec::Rest::Session do
 
       expect(response.status).to eq(201)
       expect(response.json["email"]).to eq("milestone1@example.com")
-      expect(session.last_request[:headers]["Accept"]).to eq("application/json")
-      expect(session.last_request[:headers]["Content-Type"]).to eq("application/json")
+      expect(session.last_request[:env]["HTTP_ACCEPT"]).to eq("application/json")
+      expect(session.last_request[:env]["CONTENT_TYPE"]).to eq("application/json")
     end
 
     it "normalizes outgoing headers to rack env keys for the downstream app" do
