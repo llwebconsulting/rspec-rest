@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/llwebconsulting/rspec-rest"
   spec.metadata["changelog_uri"] = "https://github.com/llwebconsulting/rspec-rest/blob/main/CHANGELOG.md"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   gemspec = File.basename(__FILE__)
   spec.files = Dir.chdir(__dir__) do
@@ -35,4 +36,6 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.13"
+  spec.add_development_dependency "rubocop", "~> 1.72"
+  spec.add_development_dependency "rubocop-rspec", "~> 3.4"
 end
