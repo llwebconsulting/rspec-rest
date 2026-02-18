@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "config"
+require_relative "session"
 module RSpec
   module Rest
     module DSL
-      HTTP_METHODS = %i[get post put patch delete].freeze
+      HTTP_METHODS = ::RSpec::Rest::Session::SUPPORTED_HTTP_METHODS
 
       class ApiConfigBuilder
         def initialize(config)
@@ -80,7 +82,13 @@ module RSpec
           stack = @rest_resource_stack || []
           return nil if stack.empty?
 
-          stack.join("/")
+          first_had_leading_slash = stack.first.to_s.start_with?("/")
+          normalized_segments = stack.map do |segment|
+            segment.to_s.sub(%r{\A/+}, "").sub(%r{/+\z}, "")
+          end.reject(&:empty?)
+
+          path = normalized_segments.join("/")
+          first_had_leading_slash && !path.empty? ? "/#{path}" : path
         end
       end
 
@@ -164,18 +172,26 @@ module RSpec
         end
 
         def rest_request_state
-          @rest_request_state ||= {
-            headers: {},
-            query: nil,
-            json: nil,
-            path_params: {}
-          }
+          unless defined?(@rest_request_state) && @rest_request_state
+            raise "REST request state accessed before a request was started. Ensure a REST request is started before setting headers, query, json, or path params."
+          end
+
+          @rest_request_state
         end
 
         def apply_path_params(path, params)
-          params.reduce(path.to_s) do |rendered, (key, value)|
-            rendered.gsub("{#{key}}", value.to_s)
+          rendered = params.reduce(path.to_s) do |current, (key, value)|
+            current.gsub("{#{key}}", value.to_s)
           end
+
+          # Detect any placeholders that were not replaced and provide a clear error
+          missing_placeholders = rendered.scan(/\{([^}]+)\}/).flatten.uniq
+          unless missing_placeholders.empty?
+            raise ArgumentError,
+                  "Missing path params for placeholders: #{missing_placeholders.join(', ')} in path '#{path}'"
+          end
+
+          rendered
         end
       end
 

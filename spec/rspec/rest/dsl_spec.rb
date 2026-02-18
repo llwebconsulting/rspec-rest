@@ -40,6 +40,28 @@ RSpec.describe RSpec::Rest do
       expect(last_request[:headers]["X-Feature"]).to eq("dsl")
       expect(last_request[:headers]["Content-Type"]).to eq("application/json")
     end
+
+    get "/leaky_state_example" do
+      # Intentionally set extra headers and path params in this example
+      headers "X-Leaky-Header" => "should-not-persist"
+      path_params id: 42
+
+      expect(rest_response.status).to eq(200)
+      expect(last_request[:path]).to eq("/v1/users/42")
+      expect(last_request[:headers]["X-Leaky-Header"]).to eq("should-not-persist")
+    end
+
+    get "/isolation_check" do
+      # This example should not see headers or params from previous examples.
+      expect(rest_response.status).to eq(200)
+      expect(last_request[:path]).to eq("/v1/users/isolation_check")
+
+      # Base headers should still be applied.
+      expect(last_request[:headers]["Accept"]).to eq("application/json")
+
+      # The transient header set in the previous example must not be present.
+      expect(last_request[:headers].key?("X-Leaky-Header")).to be(false)
+    end
   end
 end
 # rubocop:enable RSpec/EmptyExampleGroup
