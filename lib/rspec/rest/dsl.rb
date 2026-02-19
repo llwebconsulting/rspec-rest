@@ -117,6 +117,10 @@ module RSpec
 
         def expect_header(key, value_or_regex)
           actual = header_value_for(key)
+          available_keys = rest_response.headers.keys.map(&:to_s).sort.join(", ")
+          message = "Expected response header #{key.inspect} to be present. " \
+                    "Available headers: [#{available_keys}]"
+          raise ::RSpec::Expectations::ExpectationNotMetError, message if actual.nil?
 
           if value_or_regex.is_a?(Regexp)
             expect(actual).to match(value_or_regex)
