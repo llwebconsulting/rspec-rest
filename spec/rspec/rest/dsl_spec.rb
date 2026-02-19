@@ -32,8 +32,10 @@ RSpec.describe RSpec::Rest do
 
   resource "/users" do
     get "/" do
-      expect(rest_response.status).to eq(200)
-      expect(rest_response.json).to be_an(Array)
+      expect_status 200
+      expect_header "content-type", %r{application/json}
+      expect_header "Content-Type", "application/json"
+      expect_json array_of(hash_including("id" => integer, "email" => string))
       expect(last_request[:path]).to eq("/v1/users")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
     end
@@ -41,16 +43,33 @@ RSpec.describe RSpec::Rest do
     get "/{id}" do
       path_params id: 1
       query include_details: "true"
-      expect(rest_response.status).to eq(200)
+      expect_status 200
       expect(last_request[:path]).to eq("/v1/users/1?include_details=true")
+    end
+
+    get "/{id}" do
+      path_params id: 1
+      expect_json(
+        "id" => 1,
+        "email" => "jane@example.com",
+        "name" => "Jane"
+      )
+    end
+
+    get "/{id}" do
+      path_params id: 2
+      expect_json do |payload|
+        expect(payload["id"]).to integer
+        expect(payload["email"]).to string
+      end
     end
 
     post "/" do
       headers "X-Trace-Id" => "dsl-123"
       header "X-Feature", "dsl"
       json "email" => "dsl@example.com", "name" => "DSL"
-      expect(rest_response.status).to eq(201)
-      expect(rest_response.json["email"]).to eq("dsl@example.com")
+      expect_status 201
+      expect_json hash_including("email" => "dsl@example.com", "id" => integer)
       expect(last_request[:headers]["X-Trace-Id"]).to eq("dsl-123")
       expect(last_request[:headers]["X-Feature"]).to eq("dsl")
       expect(last_request[:headers]["Content-Type"]).to eq("application/json")
@@ -84,6 +103,13 @@ RSpec.describe RSpec::Rest do
 
       # The transient header set in the previous example must not be present.
       expect(last_request[:headers].key?("X-Leaky-Header")).to be(false)
+    end
+  end
+
+  resource "/flags" do
+    get "/" do
+      expect_status 200
+      expect_json hash_including("enabled" => boolean)
     end
   end
 end

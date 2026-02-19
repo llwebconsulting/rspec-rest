@@ -2,6 +2,7 @@
 
 require_relative "config"
 require_relative "errors"
+require_relative "expectations"
 require_relative "session"
 module RSpec
   module Rest
@@ -94,6 +95,8 @@ module RSpec
       end
 
       module InstanceMethods
+        include Expectations
+
         def rest_session
           @rest_session ||= Session.new(self.class.rest_config)
         end
@@ -108,10 +111,6 @@ module RSpec
           ensure_request_context!
           execute_rest_request_if_pending
           rest_session.last_request
-        end
-
-        def expect_status(code)
-          expect(rest_response.status).to eq(code)
         end
 
         def header(key, value)
