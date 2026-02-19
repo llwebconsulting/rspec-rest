@@ -93,7 +93,8 @@ module RSpec
       def request_dump
         Formatters::RequestDump.new(
           last_request: safe_last_request,
-          response: safe_rest_response
+          response: safe_rest_response,
+          redacted_headers: redacted_headers_for_dump
         ).format
       end
 
@@ -106,6 +107,12 @@ module RSpec
       def safe_rest_response
         rest_response
       rescue MissingRequestContextError, StandardError
+        nil
+      end
+
+      def redacted_headers_for_dump
+        self.class.rest_config.redact_headers
+      rescue StandardError
         nil
       end
     end

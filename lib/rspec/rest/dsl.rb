@@ -17,7 +17,8 @@ module RSpec
             app: config.app,
             base_path: config.base_path,
             base_headers: config.base_headers,
-            default_format: config.default_format
+            default_format: config.default_format,
+            redact_headers: config.redact_headers
           )
         end
 
@@ -35,6 +36,10 @@ module RSpec
 
         def default_format(value)
           @config.default_format = value
+        end
+
+        def redact_headers(value)
+          @config.redact_headers = value.dup
         end
 
         def to_config
@@ -76,7 +81,8 @@ module RSpec
             app: parent.app,
             base_path: parent.base_path,
             base_headers: parent.base_headers,
-            default_format: parent.default_format
+            default_format: parent.default_format,
+            redact_headers: parent.redact_headers
           )
         end
 

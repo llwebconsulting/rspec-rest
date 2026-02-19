@@ -10,7 +10,10 @@ RSpec.describe RSpec::Rest do
   api do
     app RackApp.new
     base_path "/v1"
-    base_headers "Accept" => "application/json"
+    base_headers(
+      "Accept" => "application/json",
+      "Authorization" => "Bearer super-secret-token"
+    )
     default_format :json
   end
 
@@ -21,6 +24,8 @@ RSpec.describe RSpec::Rest do
       end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
         expect(error.message).to include("Request:")
         expect(error.message).to include("GET /v1/users")
+        expect(error.message).to include("Authorization: [REDACTED]")
+        expect(error.message).not_to include("super-secret-token")
         expect(error.message).to include("Response:")
         expect(error.message).to include("Status: 200")
         expect(error.message).to include("\"id\": 1")

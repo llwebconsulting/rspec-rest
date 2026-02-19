@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../config"
 
 module RSpec
   module Rest
     module Formatters
       class RequestDump
-        def initialize(last_request:, response:)
+        def initialize(last_request:, response:, redacted_headers: nil)
           @last_request = last_request || {}
           @response = response
+          @redacted_headers = normalize_redacted_headers(redacted_headers || Config::DEFAULT_REDACT_HEADERS)
         end
 
         def format
@@ -53,7 +55,7 @@ module RSpec
           return "(none)" if headers.nil? || headers.empty?
 
           headers.sort_by { |key, _| key.to_s.downcase }
-                 .map { |key, value| "#{key}: #{value}" }
+                 .map { |key, value| "#{key}: #{redacted_header_value(key, value)}" }
                  .join("\n")
         end
 
@@ -75,6 +77,20 @@ module RSpec
           JSON.parse(value)
         rescue JSON::ParserError
           nil
+        end
+
+        def redacted_header_value(key, value)
+          return value unless redacted_header?(key)
+
+          "[REDACTED]"
+        end
+
+        def redacted_header?(key)
+          @redacted_headers.include?(key.to_s.downcase)
+        end
+
+        def normalize_redacted_headers(headers)
+          headers.map { |header| header.to_s.downcase }
         end
       end
     end
