@@ -85,7 +85,9 @@ module RSpec
         yield
       rescue ::RSpec::Expectations::ExpectationNotMetError => e
         message = "#{e.message}\n\n#{request_dump}"
-        raise ::RSpec::Expectations::ExpectationNotMetError, message
+        new_exception = e.exception(message)
+        new_exception.set_backtrace(e.backtrace)
+        raise new_exception
       end
 
       def request_dump
@@ -102,8 +104,8 @@ module RSpec
       end
 
       def safe_rest_response
-        @rest_response
-      rescue StandardError
+        rest_response
+      rescue MissingRequestContextError, StandardError
         nil
       end
     end
