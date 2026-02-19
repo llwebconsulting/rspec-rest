@@ -47,7 +47,8 @@ RSpec.describe RSpec::Rest do
       expect(last_request[:path]).to eq("/v1/users/1?include_details=true")
     end
 
-    get "/1" do
+    get "/{id}" do
+      path_params id: 1
       expect_json(
         "id" => 1,
         "email" => "jane@example.com",
@@ -55,7 +56,8 @@ RSpec.describe RSpec::Rest do
       )
     end
 
-    get "/1" do
+    get "/{id}" do
+      path_params id: 2
       expect_json do |payload|
         expect(payload["id"]).to integer
         expect(payload["email"]).to string
