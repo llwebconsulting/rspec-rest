@@ -36,6 +36,10 @@ class RackApp
       return json_response(404, { "error" => "not found" })
     end
 
+    if req.get? && req.path == "/v1/flags"
+      return json_response(200, { "enabled" => true })
+    end
+
     if req.get? && req.path == "/v1/bad_json"
       return [200, { "Content-Type" => "text/plain" }, ["this is not json"]]
     end
