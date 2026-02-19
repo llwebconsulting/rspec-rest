@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "errors"
 module RSpec
   module Rest
     class JsonSelector
