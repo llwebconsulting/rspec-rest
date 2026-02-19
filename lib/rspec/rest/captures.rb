@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "errors"
+require_relative "json_selector"
+
 module RSpec
   module Rest
     module Captures
