@@ -70,9 +70,40 @@ RSpec.describe RSpec::Rest do
       json "email" => "dsl@example.com", "name" => "DSL"
       expect_status 201
       expect_json hash_including("email" => "dsl@example.com", "id" => integer)
+      capture :user_id, "$.id"
+      expect(get(:user_id)).to integer
       expect(last_request[:headers]["X-Trace-Id"]).to eq("dsl-123")
       expect(last_request[:headers]["X-Feature"]).to eq("dsl")
       expect(last_request[:headers]["Content-Type"]).to eq("application/json")
+    end
+
+    post "/" do
+      json "email" => "flow@example.com", "name" => "Flow"
+      expect_status 201
+      capture :user_id, "$.id"
+
+      start_rest_request(method: :get, path: "/{user_id}", resource_path: "/users")
+      path_params user_id: get(:user_id)
+      expect_status 200
+      expect_json hash_including("id" => get(:user_id))
+    end
+
+    get "/1" do
+      expect do
+        get(:missing_id)
+      end.to raise_error(RSpec::Rest::MissingCaptureError, /No captured value found/)
+    end
+
+    get "/1" do
+      expect do
+        capture :broken, "users[0]"
+      end.to raise_error(RSpec::Rest::InvalidJsonSelectorError, /must start with '\$'/)
+    end
+
+    get "/1" do
+      expect do
+        capture :missing, "$.not_here"
+      end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
     end
 
     resource "/{id}/posts" do

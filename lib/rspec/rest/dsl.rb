@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "config"
+require_relative "captures"
 require_relative "errors"
 require_relative "expectations"
+require_relative "json_selector"
 require_relative "session"
 module RSpec
   module Rest
@@ -95,6 +97,7 @@ module RSpec
       end
 
       module InstanceMethods
+        include Captures
         include Expectations
 
         def rest_session
