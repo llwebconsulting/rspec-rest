@@ -11,5 +11,11 @@ module RSpec
     class UnsupportedHttpMethodError < Error; end
 
     class MissingRequestContextError < Error; end
+
+    class InvalidJsonSelectorError < Error; end
+
+    class MissingJsonPathError < Error; end
+
+    class MissingCaptureError < Error; end
   end
 end

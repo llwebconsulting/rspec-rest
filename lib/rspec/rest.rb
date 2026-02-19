@@ -5,6 +5,7 @@ require_relative "rest/errors"
 require_relative "rest/config"
 require_relative "rest/response"
 require_relative "rest/session"
+require_relative "rest/json_selector"
 require_relative "rest/dsl"
 
 module RSpec
