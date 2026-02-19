@@ -34,6 +34,7 @@ RSpec.describe RSpec::Rest do
     get "/" do
       expect_status 200
       expect_header "content-type", %r{application/json}
+      expect_header "Content-Type", "application/json"
       expect_json array_of(hash_including("id" => integer, "email" => string))
       expect(last_request[:path]).to eq("/v1/users")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
