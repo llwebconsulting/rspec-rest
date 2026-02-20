@@ -1,64 +1,43 @@
 # rspec-rest
 
-`rspec-rest` is a Ruby gem for writing concise, behavior-first REST API tests
-with RSpec and Rack::Test.
+`rspec-rest` is a Ruby gem for behavior-first REST API specs built on top of
+RSpec and Rack::Test.
 
-The goal is to make API specs read like behavior specs instead of HTTP plumbing.
+It focuses on:
+
+- concise request DSL
+- JSON-first expectations
+- capture/reuse of response values
+- high-signal failure output with request/response context
+- auto-generated `curl` reproduction commands on failures
 
 ## Status
 
-This project is in active development.
-
-- Milestone 0 (gem bootstrap + harness) is complete.
-- Milestones 1+ (core runtime, DSL, captures, failure formatting) are in progress.
-
-## Why this gem
-
-`rspec-rest` is designed for Ruby/Rails engineers who want:
-
-- Less request-spec boilerplate
-- Reusable API resource groupings
-- Cleaner JSON assertions
-- Better failure diagnostics with request/response context
-- Reproducible `curl` output for failing requests (planned for v1)
-
-## Planned v1 capabilities
-
-- Rack::Test in-process request execution
-- RSpec integration and DSL entrypoint (`include RSpec::Rest`)
-- `api` and `resource` blocks
-- Verb helpers: `get/post/put/patch/delete`
-- Request builders: `header`, `headers`, `json`, `query`, `path_params`
-- Expectations: `expect_status`, `expect_header`, `expect_json`
-- Captures: `capture(:name, "$.path")`, `get(:name)`
-- Failure output with request/response dump
-- Auto-generated `curl` command on request assertion failures
+The gem is pre-release and in active development toward `0.1.0`.
 
 ## Installation
 
-Once published:
+When published:
 
 ```ruby
 # Gemfile
 gem "rspec-rest"
 ```
 
-Then run:
-
-```bash
-bundle install
-```
-
-For local development before release:
+Until then, use GitHub:
 
 ```ruby
 # Gemfile
 gem "rspec-rest", git: "https://github.com/llwebconsulting/rspec-rest.git"
 ```
 
-## Quick start (target DSL)
+Then:
 
-This is the intended v1 usage pattern:
+```bash
+bundle install
+```
+
+## Quick Start
 
 ```ruby
 RSpec.describe "Users API" do
@@ -66,97 +45,166 @@ RSpec.describe "Users API" do
 
   api do
     app Rails.application
+    base_path "/v1"
     base_headers "Accept" => "application/json"
+    default_format :json
+    base_url "http://localhost:3000" # used for failure-time curl reproduction
   end
 
-  resource "/v1/users" do
+  resource "/users" do
     get "/" do
       expect_status 200
+      expect_header "Content-Type", "application/json"
+      expect_json array_of(hash_including("id" => integer, "email" => string))
     end
 
     post "/" do
-      json name: "Carl", email: "carl@example.com"
+      json "email" => "carl@example.com", "name" => "Carl"
       expect_status 201
       capture :user_id, "$.id"
-    end
-
-    get "/{user_id}" do
-      path_params user_id: get(:user_id)
-      expect_status 200
     end
   end
 end
 ```
 
-## Current development harness
+## API Config (`api`)
 
-The repository currently includes a minimal Rack app and baseline specs to
-support iterative gem development.
+`api` defines shared runtime configuration for a spec group.
 
-### Test app endpoints
-
-- `GET /v1/users`
-- `POST /v1/users`
-- `GET /v1/users/:id`
-- `GET /v1/bad_json`
-
-Run tests locally:
-
-```bash
-bundle exec rspec
-bundle exec rubocop
+```ruby
+api do
+  app Rails.application
+  base_path "/v1"
+  base_headers "Accept" => "application/json"
+  default_format :json
+  base_url "http://localhost:3000"
+  redact_headers ["Authorization", "Cookie", "Set-Cookie"]
+end
 ```
 
-## Architecture (planned)
+Supported config:
 
-Core modules/classes:
+- `app`: Rack app (required)
+- `base_path`: base request path prefix
+- `base_headers`: default headers merged into every request
+- `default_format`: set to `:json` to default `Accept: application/json`
+- `base_url`: used for generated curl commands (`http://example.org` default)
+- `redact_headers`: headers redacted in failure output and curl
 
-- `RSpec::Rest::Config`
-- `RSpec::Rest::Session`
-- `RSpec::Rest::Response`
-- `RSpec::Rest::DSL`
-- `RSpec::Rest::JsonSelector`
-- `RSpec::Rest::RequestRecorder` (for failure-time `curl`)
+## Resources And Verbs
+
+- `resource "/users" do ... end`
+- `get`, `post`, `put`, `patch`, `delete`
+
+Resource paths are composable and support placeholders:
+
+```ruby
+resource "/users" do
+  resource "/{id}/posts" do
+    get "/" do
+      path_params id: 1
+      expect_status 404
+    end
+  end
+end
+```
+
+## Request Builders
+
+Inside verb blocks:
+
+- `header(key, value)`
+- `headers(hash)`
+- `query(hash)`
+- `json(hash_or_string)`
+- `path_params(hash)`
+
+Example:
+
+```ruby
+post "/" do
+  headers "X-Trace-Id" => "abc-123"
+  query include_details: "true"
+  json "email" => "dev@example.com", "name" => "Dev"
+  expect_status 201
+end
+```
+
+## Expectations
+
+Available expectation helpers:
+
+- `expect_status(code)`
+- `expect_header(key, value_or_regex)`
+- `expect_json(expected = nil, &block)`
+
+`expect_json` supports:
+
+- matcher mode:
+  - `expect_json hash_including("id" => integer)`
+- equality mode:
+  - `expect_json("id" => 1, "email" => "jane@example.com", "name" => "Jane")`
+- block mode:
+  - `expect_json { |payload| expect(payload["id"]).to integer }`
+
+JSON type helpers:
+
+- `integer`
+- `string`
+- `boolean`
+- `array_of(matcher)`
+- `hash_including(...)`
+
+## Captures
+
+Capture response values and reuse them later in the same example:
+
+- `capture(:name, selector)`
+- `get(:name)`
+
+Selector syntax (minimal JSON selector):
+
+- `$.a.b`
+- `$.items[0].id`
+
+Example:
+
+```ruby
+post "/" do
+  json "email" => "flow@example.com", "name" => "Flow"
+  expect_status 201
+  capture :user_id, "$.id"
+end
+```
+
+## Failure Output and curl Reproduction
+
+When an expectation fails, output includes:
+
+- request method/path
+- request headers/body
+- response status/headers/body
+- generated `curl` command
+
+Sensitive headers are redacted by default and can be customized via
+`redact_headers`.
 
 ## Development
 
-Setup:
-
 ```bash
 bundle install
-```
-
-Common commands:
-
-```bash
 bundle exec rspec
 bundle exec rubocop
 ```
 
-CI runs both checks on pushes to `main` and on pull requests.
+## Namespace
 
-## Roadmap
-
-Tracked as GitHub issues in milestone order:
-
-1. Bootstrap gem and baseline harness
-2. Core config/session/response runtime
-3. DSL core (`api/resource/verbs/builders`)
-4. Expectations and JSON type helpers
-5. Captures and minimal JSON selector
-6. Failure output formatter
-7. Auto-generated `curl` reproduction
-8. Docs and v1 acceptance pass
+Gem name: `rspec-rest`  
+Ruby namespace: `RSpec::Rest`
 
 ## Changelog
 
-See `CHANGELOG.md` for release history and unreleased changes.
-
-## Contributing
-
-- Open an issue for bugs, proposals, and roadmap-aligned work.
-- Use the PR template at `.github/pull_request_template.md`.
-- Include tests for behavior changes.
+See `CHANGELOG.md`.
 
 ## License
 
