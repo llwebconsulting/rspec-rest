@@ -24,7 +24,7 @@ Semantic Versioning.
   - request/response dump formatter
   - pretty-printed JSON output
   - configurable sensitive-header redaction
-- cURL reproduction:
+- `curl` reproduction:
   - generated `curl` command in failure output
   - full URL generation with `base_url`
   - header/body/query reproduction with redaction
