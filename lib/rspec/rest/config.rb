@@ -14,7 +14,7 @@ module RSpec
 
       attr_accessor :app, :base_path, :base_headers, :default_format, :redact_headers, :base_url
 
-      def initialize(options = {})
+      def initialize(**options)
         @app = options[:app]
         @base_path = options[:base_path] || ""
         @base_headers = (options[:base_headers] || {}).dup
