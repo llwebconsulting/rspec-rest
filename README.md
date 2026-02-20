@@ -177,7 +177,7 @@ post "/" do
 end
 ```
 
-## Failure Output And cURL Reproduction
+## Failure Output and curl Reproduction
 
 When an expectation fails, output includes:
 
