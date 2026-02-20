@@ -18,7 +18,8 @@ module RSpec
             base_path: config.base_path,
             base_headers: config.base_headers,
             default_format: config.default_format,
-            redact_headers: config.redact_headers
+            redact_headers: config.redact_headers,
+            base_url: config.base_url
           )
         end
 
@@ -40,6 +41,10 @@ module RSpec
 
         def redact_headers(value)
           @config.redact_headers = value.dup
+        end
+
+        def base_url(value)
+          @config.base_url = value
         end
 
         def to_config
@@ -82,7 +87,8 @@ module RSpec
             base_path: parent.base_path,
             base_headers: parent.base_headers,
             default_format: parent.default_format,
-            redact_headers: parent.redact_headers
+            redact_headers: parent.redact_headers,
+            base_url: parent.base_url
           )
         end
 
