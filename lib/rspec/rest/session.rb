@@ -38,6 +38,7 @@ module RSpec
         @last_request = {
           method: method.upcase,
           path: request_path,
+          url: build_url(config.base_url, request_path),
           headers: request_headers,
           env: rack_env_headers,
           body: request_payload
@@ -112,6 +113,10 @@ module RSpec
         segments = [base_path, resource_path, endpoint_path].compact.map(&:to_s)
         normalized = segments.map { |segment| segment.gsub(%r{\A/+|/+\z}, "") }.reject(&:empty?)
         "/#{normalized.join('/')}"
+      end
+
+      def build_url(base_url, path)
+        "#{base_url.to_s.sub(%r{/+\z}, '')}#{path}"
       end
     end
   end

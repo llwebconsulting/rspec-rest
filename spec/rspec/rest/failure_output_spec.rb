@@ -29,10 +29,16 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("Response:")
         expect(error.message).to include("Status: 200")
         expect(error.message).to include("\"id\": 1")
+        expect(error.message).to include("Reproduce with:")
+        expect(error.message).to include("curl -X GET")
+        expect(error.message).to include("'http://example.org/v1/users'")
+        expect(error.message).to include("-H 'Authorization: [REDACTED]'")
       }
     end
 
     post "/" do
+      headers "X-Trace-Id" => "trace-123"
+      query include_details: "true"
       json "email" => "dump@example.com", "name" => "Dump"
 
       expect do
@@ -44,6 +50,10 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("\"email\": \"dump@example.com\"")
         expect(error.message).to include("Response:")
         expect(error.message).to include("Status: 201")
+        expect(error.message).to include("curl -X POST")
+        expect(error.message).to include("'http://example.org/v1/users?include_details=true'")
+        expect(error.message).to include("-H 'X-Trace-Id: trace-123'")
+        expect(error.message).to include("-d '{\"email\":\"dump@example.com\",\"name\":\"Dump\"}'")
       }
     end
   end

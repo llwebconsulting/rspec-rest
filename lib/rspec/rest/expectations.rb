@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "formatters/request_dump"
+require_relative "formatters/request_recorder"
 
 module RSpec
   module Rest
@@ -84,7 +85,7 @@ module RSpec
       def with_request_dump_on_failure
         yield
       rescue ::RSpec::Expectations::ExpectationNotMetError => e
-        message = "#{e.message}\n\n#{request_dump}"
+        message = "#{e.message}\n\n#{request_dump}\n\nReproduce with:\n#{request_curl}"
         new_exception = e.exception(message)
         new_exception.set_backtrace(e.backtrace)
         raise new_exception
@@ -114,6 +115,13 @@ module RSpec
         self.class.rest_config.redact_headers
       rescue StandardError
         nil
+      end
+
+      def request_curl
+        Formatters::RequestRecorder.new(
+          last_request: safe_last_request,
+          redacted_headers: redacted_headers_for_dump
+        ).to_curl
       end
     end
   end
