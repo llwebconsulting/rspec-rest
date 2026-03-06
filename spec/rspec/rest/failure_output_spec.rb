@@ -133,5 +133,19 @@ RSpec.describe RSpec::Rest do
       }
     end
   end
+
+  resource "/uploads" do
+    post "/" do
+      file :file, File.expand_path("../../fixtures/files/sample_upload.txt", __dir__), content_type: "text/plain"
+
+      expect do
+        expect_status 200
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("POST /v1/uploads")
+        expect(error.message).to include("Reproduce with:")
+        expect(error.message).to include("curl -X POST")
+      }
+    end
+  end
 end
 # rubocop:enable RSpec/EmptyExampleGroup

@@ -215,4 +215,55 @@ RSpec.describe RSpec::Rest do
       expect_max_page_size 20
     end
   end
+
+  resource "/uploads" do
+    post "/" do
+      multipart!
+      file_path = File.expand_path("../../fixtures/files/sample_upload.txt", __dir__)
+      file :file, file_path, content_type: "text/plain"
+
+      expect_status 201
+      expect_json hash_including(
+        "filename" => "sample_upload.txt",
+        "content_type" => "text/plain",
+        "size" => integer
+      )
+      expect(last_request[:headers].key?("Content-Type")).to be(false)
+      expect(last_request[:body][:file]).to be_a(Rack::Test::UploadedFile)
+    end
+
+    post "/" do
+      uploaded = Rack::Test::UploadedFile.new(
+        File.expand_path("../../fixtures/files/sample_upload.txt", __dir__),
+        "text/plain"
+      )
+      file :file, uploaded
+
+      expect_status 201
+      expect_json hash_including("filename" => "sample_upload.txt")
+    end
+
+    post "/" do
+      uploaded = Rack::Test::UploadedFile.new(
+        File.expand_path("../../fixtures/files/sample_upload.txt", __dir__),
+        "text/plain"
+      )
+
+      expect do
+        file :file, uploaded, content_type: "image/jpeg"
+      end.to raise_error(
+        ArgumentError,
+        /content_type and filename cannot be specified/
+      )
+    end
+
+    post "/" do
+      multipart!
+      json note: "invalid"
+
+      expect do
+        rest_response
+      end.to raise_error(ArgumentError, /Cannot use json\(\.\.\.\) with multipart! requests/)
+    end
+  end
 end

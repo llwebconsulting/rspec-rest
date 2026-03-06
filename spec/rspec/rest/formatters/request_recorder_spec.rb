@@ -61,4 +61,19 @@ RSpec.describe RSpec::Rest::Formatters::RequestRecorder do
     expect(curl).to include("-H 'X-Custom-Secret: [REDACTED]'")
     expect(curl).to include("-H 'Authorization: Bearer visible'")
   end
+
+  it "serializes non-JSON body values in hash payloads" do
+    curl = described_class.new(
+      last_request: {
+        method: "POST",
+        url: "http://example.org/v1/uploads",
+        headers: { "Content-Type" => "multipart/form-data" },
+        body: { file: Rack::Test::UploadedFile.new(__FILE__, "text/plain") }
+      }
+    ).to_curl
+
+    expect(curl).to include("curl -X POST")
+    expect(curl).to include("-d")
+    expect(curl).to include("UploadedFile")
+  end
 end
