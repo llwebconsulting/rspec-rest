@@ -122,6 +122,8 @@ RSpec.describe "Posts API" do
       expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
       expect_json_at "$[0].id", posts.first.id
       expect_json_at "$[0].author.id", posts.first.author.id
+      expect_page_size 10
+      expect_max_page_size 20
     end
   end
 end
@@ -207,6 +209,10 @@ Available expectation helpers:
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
 - `expect_json_at(selector, expected = nil, &block)`
+- `expect_error(status:, message: nil, includes: nil, field: nil, key: "error")`
+- `expect_page_size(size, selector: "$")`
+- `expect_max_page_size(max, selector: "$")`
+- `expect_ids_in_order(ids, selector: "$[*].id")`
 
 `expect_json` supports:
 
@@ -225,6 +231,27 @@ Available expectation helpers:
   - `expect_json_at "$.user.email", "jane@example.com"`
 - block mode:
   - `expect_json_at "$.items[0]" { |item| expect(item["id"]).to integer }`
+
+`expect_error` is a convenience helper for common API error payload assertions:
+
+```ruby
+get "/{id}" do
+  path_params id: 999
+  expect_error status: 404, message: "Post not found"
+end
+```
+
+Pagination helpers:
+
+```ruby
+get "/" do
+  query page: 2, per_page: 10
+  expect_status 200
+  expect_page_size 10
+  expect_max_page_size 20
+  expect_ids_in_order [30, 29, 28, 27, 26, 25, 24, 23, 22, 21]
+end
+```
 
 JSON type helpers:
 

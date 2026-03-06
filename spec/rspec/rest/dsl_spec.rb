@@ -175,4 +175,44 @@ RSpec.describe RSpec::Rest do
       expect_json hash_including("enabled" => boolean)
     end
   end
+
+  resource "/errors" do
+    get "/string" do
+      expect_error status: 422, message: "Unable to save post"
+    end
+
+    get "/string" do
+      expect_error status: 422, message: "Unable to save post", key: :error
+    end
+
+    get "/array" do
+      expect_error status: 422, includes: "font_size", field: "font_size"
+    end
+
+    get "/list" do
+      expect do
+        expect_error status: 422, message: "anything"
+      end.to raise_error(
+        RSpec::Expectations::ExpectationNotMetError,
+        /Expected JSON response to be an object/
+      )
+    end
+  end
+
+  resource "/posts" do
+    get "/" do
+      query page: 1, per_page: 2
+      expect_status 200
+      expect_page_size 2
+      expect_max_page_size 20
+      expect_ids_in_order [3, 2]
+    end
+
+    get "/" do
+      query per_page: 25
+      expect_status 200
+      expect_page_size 3
+      expect_max_page_size 20
+    end
+  end
 end

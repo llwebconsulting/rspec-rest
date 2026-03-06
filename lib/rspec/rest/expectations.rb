@@ -2,13 +2,17 @@
 
 require_relative "formatters/request_dump"
 require_relative "formatters/request_recorder"
+require_relative "error_expectations"
 require_relative "json_selector"
 require_relative "json_type_helpers"
+require_relative "pagination_expectations"
 
 module RSpec
   module Rest
     module Expectations
+      include ErrorExpectations
       include JsonTypeHelpers
+      include PaginationExpectations
 
       def expect_status(code)
         with_request_dump_on_failure do
