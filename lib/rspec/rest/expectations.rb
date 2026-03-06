@@ -2,10 +2,14 @@
 
 require_relative "formatters/request_dump"
 require_relative "formatters/request_recorder"
+require_relative "json_selector"
+require_relative "json_type_helpers"
 
 module RSpec
   module Rest
     module Expectations
+      include JsonTypeHelpers
+
       def expect_status(code)
         with_request_dump_on_failure do
           expect(rest_response.status).to eq(code)
@@ -49,24 +53,25 @@ module RSpec
         end
       end
 
-      def integer
-        be_a(Integer)
-      end
+      def expect_json_at(selector, expected = nil, &block)
+        with_request_dump_on_failure do
+          selected = JsonSelector.extract(rest_response.json, selector)
 
-      def string
-        be_a(String)
-      end
+          if block
+            instance_exec(selected, &block)
+            next selected
+          end
 
-      def boolean
-        satisfy("be boolean") { |value| [true, false].include?(value) }
-      end
+          next selected if expected.nil?
 
-      def array_of(matcher)
-        all(matcher)
-      end
+          if expected.respond_to?(:matches?)
+            expect(selected).to expected
+          else
+            expect(selected).to eq(expected)
+          end
 
-      def hash_including(*)
-        a_hash_including(*)
+          selected
+        end
       end
 
       private

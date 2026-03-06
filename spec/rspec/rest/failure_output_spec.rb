@@ -56,6 +56,19 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("-d '{\"email\":\"dump@example.com\",\"name\":\"Dump\"}'")
       }
     end
+
+    get "/" do
+      expect do
+        expect_json_at("$[0].id", 999)
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("Request:")
+        expect(error.message).to include("GET /v1/users")
+        expect(error.message).to include("Response:")
+        expect(error.message).to include("Status: 200")
+        expect(error.message).to include("Reproduce with:")
+        expect(error.message).to include("curl -X GET")
+      }
+    end
   end
 end
 # rubocop:enable RSpec/EmptyExampleGroup

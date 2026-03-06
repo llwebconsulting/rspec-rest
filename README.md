@@ -115,12 +115,13 @@ RSpec.describe "Posts API" do
 
   resource "/posts" do
     get "/" do
-      header "Authorization", "Bearer #{auth_token}"
+      bearer auth_token
       query page: 1, per_page: 10
 
       expect_status 200
       expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
-      expect_json { |payload| expect(payload.first["id"]).to eq(posts.first.id) }
+      expect_json_at "$[0].id", posts.first.id
+      expect_json_at "$[0].author.id", posts.first.author.id
     end
   end
 end
@@ -180,6 +181,8 @@ Inside verb blocks:
 
 - `header(key, value)`
 - `headers(hash)`
+- `bearer(token)`
+- `unauthenticated!`
 - `query(hash)`
 - `json(hash_or_string)`
 - `path_params(hash)`
@@ -189,6 +192,7 @@ Example:
 ```ruby
 post "/" do
   headers "X-Trace-Id" => "abc-123"
+  bearer "token-123"
   query include_details: "true"
   json "email" => "dev@example.com", "name" => "Dev"
   expect_status 201
@@ -202,6 +206,7 @@ Available expectation helpers:
 - `expect_status(code)`
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
+- `expect_json_at(selector, expected = nil, &block)`
 
 `expect_json` supports:
 
@@ -211,6 +216,15 @@ Available expectation helpers:
   - `expect_json("id" => 1, "email" => "jane@example.com", "name" => "Jane")`
 - block mode:
   - `expect_json { |payload| expect(payload["id"]).to integer }`
+
+`expect_json_at` supports the same matcher/equality/block modes against a selected path:
+
+- matcher mode:
+  - `expect_json_at "$.user.id", integer`
+- equality mode:
+  - `expect_json_at "$.user.email", "jane@example.com"`
+- block mode:
+  - `expect_json_at "$.items[0]" { |item| expect(item["id"]).to integer }`
 
 JSON type helpers:
 
