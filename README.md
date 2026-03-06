@@ -67,6 +67,71 @@ RSpec.describe "Users API" do
 end
 ```
 
+## Before and After (Rack::Test to rspec-rest)
+
+The example below shows the same behavior test written two ways.
+
+Before (`Rack::Test` + manual response parsing):
+
+```ruby
+RSpec.describe MyApp::V1::Posts, type: :request do
+  include Rack::Test::Methods
+
+  def app
+    MyApp::Base
+  end
+
+  let(:auth_token) { "test-token" }
+  let!(:posts) { create_list(:post, 3).sort_by(&:created_at).reverse }
+
+  before { header "Authorization", "Bearer #{auth_token}" }
+
+  it "returns posts page 1" do
+    get "/api/v1/posts", { page: 1, per_page: 10 }
+    payload = JSON.parse(last_response.body)
+
+    expect(last_response.status).to eq(200)
+    expect(payload.size).to eq(3)
+    expect(payload.first["id"]).to eq(posts.first.id)
+    expect(payload.first["author"]["id"]).to eq(posts.first.author.id)
+  end
+end
+```
+
+After (`rspec-rest` DSL):
+
+```ruby
+RSpec.describe "Posts API" do
+  include RSpec::Rest
+
+  let(:auth_token) { "test-token" }
+  let!(:posts) { create_list(:post, 3).sort_by(&:created_at).reverse }
+
+  api do
+    app MyApp::Base
+    base_path "/api/v1"
+    default_format :json
+  end
+
+  resource "/posts" do
+    get "/" do
+      header "Authorization", "Bearer #{auth_token}"
+      query page: 1, per_page: 10
+
+      expect_status 200
+      expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
+      expect_json { |payload| expect(payload.first["id"]).to eq(posts.first.id) }
+    end
+  end
+end
+```
+
+What improves:
+
+- Request setup is declarative (`api`, `resource`, `query`, `json`).
+- JSON expectations are concise and structure-aware.
+- Failures include request/response context plus a reproducible `curl`.
+
 ## API Config (`api`)
 
 `api` defines shared runtime configuration for a spec group.
