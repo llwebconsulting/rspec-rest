@@ -5,6 +5,7 @@ require_relative "captures"
 require_relative "errors"
 require_relative "expectations"
 require_relative "json_selector"
+require_relative "request_builders"
 require_relative "session"
 module RSpec
   module Rest
@@ -111,6 +112,7 @@ module RSpec
       module InstanceMethods
         include Captures
         include Expectations
+        include RequestBuilders
 
         def rest_session
           @rest_session ||= Session.new(self.class.rest_config)
@@ -128,35 +130,6 @@ module RSpec
           rest_session.last_request
         end
 
-        def header(key, value)
-          rest_request_state[:headers][key] = value
-        end
-
-        def headers(value)
-          rest_request_state[:headers].merge!(value)
-        end
-
-        def query(value)
-          rest_request_state[:query] ||= {}
-          rest_request_state[:query].merge!(value)
-        end
-
-        def json(value)
-          rest_request_state[:json] = value
-        end
-
-        def path_params(value)
-          rest_request_state[:path_params].merge!(value.transform_keys(&:to_s))
-        end
-
-        def bearer(token)
-          header("Authorization", "Bearer #{token}")
-        end
-
-        def unauthenticated!
-          header("Authorization", nil)
-        end
-
         private
 
         def start_rest_request(method:, path:, resource_path:)
@@ -167,6 +140,8 @@ module RSpec
             headers: {},
             query: nil,
             json: nil,
+            multipart: false,
+            params: nil,
             path_params: {}
           }
           @rest_response = nil
@@ -177,6 +152,7 @@ module RSpec
           ensure_request_context!
           return if @rest_request_executed
 
+          @rest_request_executed = true
           execute_rest_request
         end
 
@@ -189,6 +165,9 @@ module RSpec
             rest_request_state[:resource_path],
             rest_request_state[:path_params]
           )
+          if rest_request_state[:multipart] && !rest_request_state[:json].nil?
+            raise ArgumentError, "Cannot use json(...) with multipart! requests. Use file(...) and params."
+          end
 
           @rest_response = rest_session.request(
             method: rest_request_state[:method],
@@ -196,9 +175,9 @@ module RSpec
             resource_path: request_resource_path,
             headers: rest_request_state[:headers],
             query: rest_request_state[:query],
-            json: rest_request_state[:json]
+            json: rest_request_state[:json],
+            params: rest_request_state[:params]
           )
-          @rest_request_executed = true
         end
 
         def rest_request_state

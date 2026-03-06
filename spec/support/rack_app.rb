@@ -65,6 +65,29 @@ class RackApp
       return json_response(422, ["top-level array error"])
     end
 
+    if req.post? && req.path == "/v1/uploads"
+      upload = req.params["file"]
+      return json_response(400, { "error" => "file is required" }) if upload.nil?
+
+      unless req.media_type == "multipart/form-data"
+        return json_response(400, { "error" => "request must be multipart/form-data" })
+      end
+
+      tempfile = upload[:tempfile] || upload["tempfile"]
+      tempfile.rewind if tempfile.respond_to?(:rewind)
+      size = tempfile.read.to_s.bytesize if tempfile.respond_to?(:read)
+      tempfile.rewind if tempfile.respond_to?(:rewind)
+
+      return json_response(
+        201,
+        {
+          "filename" => upload[:filename] || upload["filename"],
+          "content_type" => upload[:type] || upload["type"],
+          "size" => size || 0
+        }
+      )
+    end
+
     if req.get? && req.path == "/v1/bad_json"
       return [200, { "Content-Type" => "text/plain" }, ["this is not json"]]
     end

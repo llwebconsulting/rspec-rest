@@ -46,8 +46,27 @@ module RSpec
           return nil if body.nil?
           return nil if body.respond_to?(:empty?) && body.empty?
 
-          value = body.is_a?(Hash) || body.is_a?(Array) ? JSON.dump(body) : body.to_s
+          value = serialize_body(body)
           "-d #{shell_escape(value)}"
+        end
+
+        def serialize_body(body)
+          return body.to_s unless body.is_a?(Hash) || body.is_a?(Array)
+
+          JSON.dump(body)
+        rescue TypeError
+          JSON.dump(sanitize_for_json(body))
+        end
+
+        def sanitize_for_json(value)
+          case value
+          when Hash
+            value.transform_values { |inner| sanitize_for_json(inner) }
+          when Array
+            value.map { |inner| sanitize_for_json(inner) }
+          else
+            value.respond_to?(:to_str) ? value.to_str : value.to_s
+          end
         end
 
         def redacted_value(key, value)

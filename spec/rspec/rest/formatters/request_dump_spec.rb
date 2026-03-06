@@ -63,4 +63,20 @@ RSpec.describe RSpec::Rest::Formatters::RequestDump do
 
     expect_custom_redaction(dump)
   end
+
+  it "formats non-JSON-serializable request body hashes" do
+    dump = build_dump(
+      last_request: {
+        method: "POST",
+        path: "/v1/uploads",
+        headers: {},
+        body: { file: Rack::Test::UploadedFile.new(__FILE__, "text/plain") }
+      },
+      response_headers: { "Content-Type" => "application/json" },
+      response_body: '{"ok":true}'
+    )
+
+    expect(dump).to include("POST /v1/uploads")
+    expect(dump).to include("UploadedFile")
+  end
 end

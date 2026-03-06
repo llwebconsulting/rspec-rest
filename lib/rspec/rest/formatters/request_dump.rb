@@ -63,7 +63,7 @@ module RSpec
           return "(empty)" if body.nil? || (body.respond_to?(:empty?) && body.empty?)
 
           if body.is_a?(Hash) || body.is_a?(Array)
-            return JSON.pretty_generate(body)
+            return JSON.pretty_generate(sanitize_for_json(body))
           end
 
           body_str = body.to_s
@@ -77,6 +77,17 @@ module RSpec
           JSON.parse(value)
         rescue JSON::ParserError
           nil
+        end
+
+        def sanitize_for_json(value)
+          case value
+          when Hash
+            value.transform_values { |inner| sanitize_for_json(inner) }
+          when Array
+            value.map { |inner| sanitize_for_json(inner) }
+          else
+            value.respond_to?(:to_str) ? value.to_str : value.to_s
+          end
         end
 
         def redacted_header_value(key, value)

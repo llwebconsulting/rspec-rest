@@ -187,6 +187,8 @@ Inside verb blocks:
 - `unauthenticated!`
 - `query(hash)`
 - `json(hash_or_string)`
+- `multipart!`
+- `file(param_key, file_or_path, content_type: nil, filename: nil)`
 - `path_params(hash)`
 
 Example:
@@ -198,6 +200,17 @@ post "/" do
   query include_details: "true"
   json "email" => "dev@example.com", "name" => "Dev"
   expect_status 201
+end
+```
+
+Multipart upload example:
+
+```ruby
+post "/uploads" do
+  multipart!
+  file :file, Rails.root.join("spec/fixtures/files/sample_upload.txt"), content_type: "text/plain"
+  expect_status 201
+  expect_json hash_including("filename" => "sample_upload.txt")
 end
 ```
 
