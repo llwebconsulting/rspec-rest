@@ -40,6 +40,27 @@ class RackApp
       return json_response(200, { "enabled" => true })
     end
 
+    if req.get? && req.path == "/v1/posts"
+      posts = [
+        { "id" => 3, "title" => "Third" },
+        { "id" => 2, "title" => "Second" },
+        { "id" => 1, "title" => "First" }
+      ]
+
+      per_page = [integer_param(req, :per_page, default: posts.size), 20].min
+      page = [integer_param(req, :page, default: 1), 1].max
+      offset = (page - 1) * per_page
+      return json_response(200, posts.slice(offset, per_page) || [])
+    end
+
+    if req.get? && req.path == "/v1/errors/string"
+      return json_response(422, { "error" => "Unable to save post" })
+    end
+
+    if req.get? && req.path == "/v1/errors/array"
+      return json_response(422, { "error" => ["Name can't be blank", "font_size is invalid"] })
+    end
+
     if req.get? && req.path == "/v1/bad_json"
       return [200, { "Content-Type" => "text/plain" }, ["this is not json"]]
     end
@@ -59,5 +80,13 @@ class RackApp
     JSON.parse(body)
   rescue JSON::ParserError
     {}
+  end
+
+  def integer_param(req, key, default:)
+    return default unless req.params.key?(key.to_s)
+
+    Integer(req.params[key.to_s], 10)
+  rescue ArgumentError, TypeError
+    default
   end
 end
