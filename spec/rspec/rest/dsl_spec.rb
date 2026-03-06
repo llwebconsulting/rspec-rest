@@ -26,7 +26,10 @@ RSpec.describe RSpec::Rest do
   api do
     app RackApp.new
     base_path "/v1"
-    base_headers "Accept" => "application/json"
+    base_headers(
+      "Accept" => "application/json",
+      "Authorization" => "Bearer base-token"
+    )
     default_format :json
   end
 
@@ -38,6 +41,7 @@ RSpec.describe RSpec::Rest do
       expect_json array_of(hash_including("id" => integer, "email" => string))
       expect(last_request[:path]).to eq("/v1/users")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
+      expect(last_request[:headers]["Authorization"]).to eq("Bearer base-token")
     end
 
     get "/{id}" do
@@ -61,6 +65,15 @@ RSpec.describe RSpec::Rest do
       expect_json do |payload|
         expect(payload["id"]).to integer
         expect(payload["email"]).to string
+      end
+    end
+
+    get "/{id}" do
+      path_params id: 2
+      expect_json_at("$.email", "alex@example.com")
+      expect_json_at("$.id", integer)
+      expect_json_at("$.name") do |value|
+        expect(value).to eq("Alex")
       end
     end
 
@@ -104,6 +117,25 @@ RSpec.describe RSpec::Rest do
       expect do
         capture :missing, "$.not_here"
       end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
+    end
+
+    get "/1" do
+      expect do
+        expect_json_at("$.not_here")
+      end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
+    end
+
+    get "/" do
+      bearer "token-123"
+      expect_status 200
+      expect(last_request[:headers]["Authorization"]).to eq("Bearer token-123")
+    end
+
+    get "/" do
+      bearer "token-123"
+      unauthenticated!
+      expect_status 200
+      expect(last_request[:headers].key?("Authorization")).to be(false)
     end
 
     resource "/{id}/posts" do

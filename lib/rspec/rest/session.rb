@@ -76,12 +76,25 @@ module RSpec
           headers["Accept"] ||= "application/json"
         end
 
-        headers.merge!(request_headers || {})
+        merge_request_headers!(headers, request_headers || {})
         if include_json_content_type
           headers["Content-Type"] ||= "application/json"
         end
 
         headers
+      end
+
+      def merge_request_headers!(headers, request_headers)
+        request_headers.each do |key, value|
+          if value.nil?
+            headers.delete_if { |header_key, _| header_key.to_s.casecmp(key.to_s).zero? }
+            next
+          end
+
+          existing_key = headers.keys.find { |header_key| header_key.to_s.casecmp(key.to_s).zero? }
+          headers.delete(existing_key) if existing_key && existing_key != key
+          headers[key] = value
+        end
       end
 
       def build_payload(json:, params:)

@@ -149,6 +149,14 @@ module RSpec
           rest_request_state[:path_params].merge!(value.transform_keys(&:to_s))
         end
 
+        def bearer(token)
+          header("Authorization", "Bearer #{token}")
+        end
+
+        def unauthenticated!
+          header("Authorization", nil)
+        end
+
         private
 
         def start_rest_request(method:, path:, resource_path:)
