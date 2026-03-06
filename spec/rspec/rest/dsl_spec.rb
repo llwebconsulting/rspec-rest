@@ -244,6 +244,20 @@ RSpec.describe RSpec::Rest do
     end
 
     post "/" do
+      uploaded = Rack::Test::UploadedFile.new(
+        File.expand_path("../../fixtures/files/sample_upload.txt", __dir__),
+        "text/plain"
+      )
+
+      expect do
+        file :file, uploaded, content_type: "image/jpeg"
+      end.to raise_error(
+        ArgumentError,
+        /content_type and filename cannot be specified/
+      )
+    end
+
+    post "/" do
       multipart!
       json note: "invalid"
 

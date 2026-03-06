@@ -51,7 +51,14 @@ module RSpec
       private
 
       def build_uploaded_file(file_or_path, content_type:, filename:)
-        return file_or_path if file_or_path.is_a?(Rack::Test::UploadedFile)
+        if file_or_path.is_a?(Rack::Test::UploadedFile)
+          if content_type || filename
+            raise ArgumentError,
+                  "content_type and filename cannot be specified when file_or_path is a Rack::Test::UploadedFile"
+          end
+
+          return file_or_path
+        end
 
         path = if file_or_path.respond_to?(:to_path)
                  file_or_path.to_path

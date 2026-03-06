@@ -2,11 +2,14 @@
 
 require "json"
 require_relative "../config"
+require_relative "helpers"
 
 module RSpec
   module Rest
     module Formatters
       class RequestDump
+        include Helpers
+
         def initialize(last_request:, response:, redacted_headers: nil)
           @last_request = last_request || {}
           @response = response
@@ -63,7 +66,11 @@ module RSpec
           return "(empty)" if body.nil? || (body.respond_to?(:empty?) && body.empty?)
 
           if body.is_a?(Hash) || body.is_a?(Array)
-            return JSON.pretty_generate(sanitize_for_json(body))
+            begin
+              return JSON.pretty_generate(body)
+            rescue TypeError
+              return JSON.pretty_generate(sanitize_for_json(body))
+            end
           end
 
           body_str = body.to_s
@@ -79,17 +86,6 @@ module RSpec
           nil
         end
 
-        def sanitize_for_json(value)
-          case value
-          when Hash
-            value.transform_values { |inner| sanitize_for_json(inner) }
-          when Array
-            value.map { |inner| sanitize_for_json(inner) }
-          else
-            value.respond_to?(:to_str) ? value.to_str : value.to_s
-          end
-        end
-
         def redacted_header_value(key, value)
           return value unless redacted_header?(key)
 
@@ -98,10 +94,6 @@ module RSpec
 
         def redacted_header?(key)
           @redacted_headers.include?(key.to_s.downcase)
-        end
-
-        def normalize_redacted_headers(headers)
-          headers.map { |header| header.to_s.downcase }
         end
       end
     end

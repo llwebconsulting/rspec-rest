@@ -2,11 +2,14 @@
 
 require "json"
 require_relative "../config"
+require_relative "helpers"
 
 module RSpec
   module Rest
     module Formatters
       class RequestRecorder
+        include Helpers
+
         def initialize(last_request:, redacted_headers: nil)
           @last_request = last_request || {}
           @redacted_headers = normalize_redacted_headers(redacted_headers || Config::DEFAULT_REDACT_HEADERS)
@@ -58,25 +61,10 @@ module RSpec
           JSON.dump(sanitize_for_json(body))
         end
 
-        def sanitize_for_json(value)
-          case value
-          when Hash
-            value.transform_values { |inner| sanitize_for_json(inner) }
-          when Array
-            value.map { |inner| sanitize_for_json(inner) }
-          else
-            value.respond_to?(:to_str) ? value.to_str : value.to_s
-          end
-        end
-
         def redacted_value(key, value)
           return value unless @redacted_headers.include?(key.to_s.downcase)
 
           "[REDACTED]"
-        end
-
-        def normalize_redacted_headers(headers)
-          headers.map { |header| header.to_s.downcase }
         end
 
         def shell_escape(value)
