@@ -48,7 +48,7 @@ module RSpec
         key = wildcard_match[1]
         extract_collection("$").map.with_index do |item, index|
           unless item.is_a?(Hash) && item.key?(key)
-            raise MissingJsonPathError,
+            raise ::RSpec::Expectations::ExpectationNotMetError,
                   "Selector #{selector.inspect} did not match element #{index} for key #{key.inspect}."
           end
 

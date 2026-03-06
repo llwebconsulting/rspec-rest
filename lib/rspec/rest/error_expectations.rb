@@ -18,11 +18,17 @@ module RSpec
 
       def extract_error_value(key)
         payload = rest_response.json
-        error_value = payload[key]
+        unless payload.is_a?(Hash)
+          raise ::RSpec::Expectations::ExpectationNotMetError,
+                "Expected JSON response to be an object with #{key.inspect} key, got #{payload.class}."
+        end
+
+        normalized_key = key.to_s
+        error_value = payload[normalized_key]
         return error_value unless error_value.nil?
 
         raise ::RSpec::Expectations::ExpectationNotMetError,
-              "Expected JSON response to include #{key.inspect} key."
+              "Expected JSON response to include #{normalized_key.inspect} key."
       end
 
       def expect_error_message!(error_value, message)

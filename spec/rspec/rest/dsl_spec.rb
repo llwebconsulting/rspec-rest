@@ -181,8 +181,21 @@ RSpec.describe RSpec::Rest do
       expect_error status: 422, message: "Unable to save post"
     end
 
+    get "/string" do
+      expect_error status: 422, message: "Unable to save post", key: :error
+    end
+
     get "/array" do
       expect_error status: 422, includes: "font_size", field: "font_size"
+    end
+
+    get "/list" do
+      expect do
+        expect_error status: 422, message: "anything"
+      end.to raise_error(
+        RSpec::Expectations::ExpectationNotMetError,
+        /Expected JSON response to be an object/
+      )
     end
   end
 

@@ -69,6 +69,18 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("curl -X GET")
       }
     end
+
+    get "/" do
+      expect do
+        expect_ids_in_order([1, 2], selector: "$[*].missing_id")
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("did not match element")
+        expect(error.message).to include("Request:")
+        expect(error.message).to include("GET /v1/users")
+        expect(error.message).to include("Reproduce with:")
+        expect(error.message).to include("curl -X GET")
+      }
+    end
   end
 
   resource "/errors" do
@@ -82,6 +94,42 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("Status: 422")
         expect(error.message).to include("Reproduce with:")
         expect(error.message).to include("curl -X GET")
+      }
+    end
+  end
+
+  resource "/posts" do
+    get "/" do
+      query page: 1, per_page: 2
+
+      expect do
+        expect_page_size(3)
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("expected: 3")
+        expect(error.message).to include("GET /v1/posts?page=1&per_page=2")
+        expect(error.message).to include("Reproduce with:")
+      }
+    end
+
+    get "/" do
+      expect do
+        expect_ids_in_order([1, 2, 3])
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("expected: [1, 2, 3]")
+        expect(error.message).to include("GET /v1/posts")
+        expect(error.message).to include("Reproduce with:")
+      }
+    end
+  end
+
+  resource "/flags" do
+    get "/" do
+      expect do
+        expect_page_size(1, selector: "$.enabled")
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("resolve to an Array")
+        expect(error.message).to include("GET /v1/flags")
+        expect(error.message).to include("Reproduce with:")
       }
     end
   end

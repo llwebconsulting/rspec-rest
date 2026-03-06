@@ -61,6 +61,10 @@ class RackApp
       return json_response(422, { "error" => ["Name can't be blank", "font_size is invalid"] })
     end
 
+    if req.get? && req.path == "/v1/errors/list"
+      return json_response(422, ["top-level array error"])
+    end
+
     if req.get? && req.path == "/v1/bad_json"
       return [200, { "Content-Type" => "text/plain" }, ["this is not json"]]
     end
