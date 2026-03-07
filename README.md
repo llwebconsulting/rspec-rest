@@ -394,6 +394,37 @@ When an expectation fails, output includes:
 Sensitive headers are redacted by default and can be customized via
 `redact_headers`.
 
+## Contributing
+
+Contributions are welcome.
+
+Recommended workflow:
+
+1. Fork the repository on GitHub.
+2. Clone your fork locally.
+3. Create a feature branch from `main`.
+4. Make your changes with tests/docs as needed.
+5. Run quality checks locally:
+   - `bundle exec rspec`
+   - `bundle exec rubocop`
+6. Commit and push your branch to your fork.
+7. Open a Pull Request from your fork to this repository.
+
+Pull request guidelines:
+
+- Keep changes focused and include context in the PR description.
+- Add or update specs for behavior changes.
+- Update README/CHANGELOG when public behavior changes.
+- Ensure CI is green before requesting final review.
+
+Reporting issues and feature ideas:
+
+- Use GitHub Issues and choose the appropriate template:
+  - Bug report for incorrect behavior (include expected vs actual behavior and repro steps).
+  - Feature request for enhancement ideas.
+- Feature suggestions are appreciated and encouraged.
+- The fastest path to getting a feature implemented is to open a pull request with the proposed change and tests.
+
 ## Development
 
 ```bash
@@ -409,8 +440,8 @@ Ruby namespace: `RSpec::Rest`
 
 ## Changelog
 
-See `CHANGELOG.md`.
+See [CHANGELOG.md](./CHANGELOG.md).
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](./LICENSE).
