@@ -2,6 +2,7 @@
 
 require_relative "config"
 require_relative "captures"
+require_relative "class_level_contracts"
 require_relative "class_level_presets"
 require_relative "errors"
 require_relative "expectations"
@@ -55,6 +56,7 @@ module RSpec
       end
 
       module ClassMethods
+        include ClassLevelContracts
         include ClassLevelPresets
 
         def api(&)

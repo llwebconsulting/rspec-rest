@@ -113,17 +113,41 @@ RSpec.describe "Posts API" do
     default_format :json
   end
 
+  with_query locale: "en"
+  with_headers "X-Tenant-Id" => "tenant-123"
+  contract :post_summary do
+    hash_including("id" => integer, "author" => hash_including("id" => integer))
+  end
+
   resource "/posts" do
+    with_auth auth_token
+    with_query per_page: 10
+
     get "/" do
-      bearer auth_token
-      query page: 1, per_page: 10
+      query page: 1
 
       expect_status 200
-      expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
+      expect_json array_of(expect_json_contract(:post_summary))
       expect_json_at "$[0].id", posts.first.id
       expect_json_at "$[0].author.id", posts.first.author.id
       expect_page_size 10
       expect_max_page_size 20
+    end
+
+    get "/{id}" do
+      path_params id: 999_999
+      expect_error status: 404, message: "Post not found"
+    end
+  end
+
+  resource "/uploads" do
+    with_auth auth_token
+
+    post "/" do
+      multipart!
+      file :file, Rails.root.join("spec/fixtures/files/sample_upload.txt"), content_type: "text/plain"
+      expect_status 201
+      expect_json hash_including("filename" => "sample_upload.txt")
     end
   end
 end
@@ -131,8 +155,9 @@ end
 
 What improves:
 
-- Request setup is declarative (`api`, `resource`, `query`, `json`).
-- JSON expectations are concise and structure-aware.
+- Request setup is declarative (`api`, `resource`, shared presets, `query`, `multipart!`, `file`).
+- JSON expectations are concise and structure-aware (`expect_json`, `expect_json_at`).
+- Common API outcomes are one-liners (`expect_error`, pagination helpers).
 - Failures include request/response context plus a reproducible `curl`.
 
 ## API Config (`api`)
@@ -261,6 +286,7 @@ Available expectation helpers:
 - `expect_status(code)`
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
+- `expect_json_contract(name)`
 - `expect_json_at(selector, expected = nil, &block)`
 - `expect_error(status:, message: nil, includes: nil, field: nil, key: "error")`
 - `expect_page_size(size, selector: "$")`
@@ -303,6 +329,26 @@ get "/" do
   expect_page_size 10
   expect_max_page_size 20
   expect_ids_in_order [30, 29, 28, 27, 26, 25, 24, 23, 22, 21]
+end
+```
+
+## Lightweight Contracts
+
+A contract is a named, reusable JSON expectation (usually a response shape matcher).
+Define it once in your spec group, then apply it anywhere with `expect_json_contract`.
+
+```ruby
+contract :post_summary do
+  hash_including(
+    "id" => integer,
+    "title" => string,
+    "author" => hash_including("id" => integer)
+  )
+end
+
+get "/" do
+  expect_status 200
+  expect_json array_of(expect_json_contract(:post_summary))
 end
 ```
 

@@ -3,6 +3,8 @@
 require_relative "formatters/request_dump"
 require_relative "formatters/request_recorder"
 require_relative "error_expectations"
+require_relative "contract_expectations"
+require_relative "header_expectations"
 require_relative "json_selector"
 require_relative "json_type_helpers"
 require_relative "pagination_expectations"
@@ -10,29 +12,15 @@ require_relative "pagination_expectations"
 module RSpec
   module Rest
     module Expectations
+      include ContractExpectations
       include ErrorExpectations
+      include HeaderExpectations
       include JsonTypeHelpers
       include PaginationExpectations
 
       def expect_status(code)
         with_request_dump_on_failure do
           expect(rest_response.status).to eq(code)
-        end
-      end
-
-      def expect_header(key, value_or_regex)
-        with_request_dump_on_failure do
-          actual = header_value_for(key)
-          available_keys = rest_response.headers.keys.map(&:to_s).sort.join(", ")
-          message = "Expected response header #{key.inspect} to be present. " \
-                    "Available headers: [#{available_keys}]"
-          raise ::RSpec::Expectations::ExpectationNotMetError, message if actual.nil?
-
-          if value_or_regex.is_a?(Regexp)
-            expect(actual).to match(value_or_regex)
-          else
-            expect(actual).to eq(value_or_regex)
-          end
         end
       end
 
@@ -79,17 +67,6 @@ module RSpec
       end
 
       private
-
-      def header_value_for(key)
-        headers = rest_response.headers
-        return headers[key] if headers.key?(key)
-
-        key_str = key.to_s
-        pair = headers.find do |header_key, _|
-          header_key.to_s.casecmp(key_str).zero?
-        end
-        pair&.last
-      end
 
       def with_request_dump_on_failure
         yield
