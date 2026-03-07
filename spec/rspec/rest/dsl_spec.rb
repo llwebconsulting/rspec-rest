@@ -33,22 +33,35 @@ RSpec.describe RSpec::Rest do
     default_format :json
   end
 
+  with_headers "X-Global" => "global"
+  with_query locale: "en"
+
   resource "/users" do
+    with_headers "X-Resource" => "users"
+    with_query include_details: "true"
+    with_auth "resource-token"
+
     get "/" do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
       expect_json array_of(hash_including("id" => integer, "email" => string))
-      expect(last_request[:path]).to eq("/v1/users")
+      expect(last_request[:path]).to include("/v1/users?")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
-      expect(last_request[:headers]["Authorization"]).to eq("Bearer base-token")
+      expect(last_request[:headers]["Authorization"]).to eq("Bearer resource-token")
+      expect(last_request[:headers]["X-Global"]).to eq("global")
+      expect(last_request[:headers]["X-Resource"]).to eq("users")
+      expect(last_request[:path]).to include("locale=en")
+      expect(last_request[:path]).to include("include_details=true")
     end
 
     get "/{id}" do
       path_params id: 1
-      query include_details: "true"
+      query include_details: "true", locale: "fr"
       expect_status 200
-      expect(last_request[:path]).to eq("/v1/users/1?include_details=true")
+      expect(last_request[:path]).to include("/v1/users/1?")
+      expect(last_request[:path]).to include("locale=fr")
+      expect(last_request[:path]).to include("include_details=true")
     end
 
     get "/{id}" do
@@ -139,10 +152,18 @@ RSpec.describe RSpec::Rest do
     end
 
     resource "/{id}/posts" do
+      with_headers "X-Nested" => "nested"
+      with_query page: 2
+
       get "/" do
         path_params id: 1
         expect(rest_response.status).to eq(404)
-        expect(last_request[:path]).to eq("/v1/users/1/posts")
+        expect(last_request[:path]).to include("/v1/users/1/posts?")
+        expect(last_request[:path]).to include("locale=en")
+        expect(last_request[:path]).to include("include_details=true")
+        expect(last_request[:path]).to include("page=2")
+        expect(last_request[:headers]["X-Nested"]).to eq("nested")
+        expect(last_request[:headers]["X-Resource"]).to eq("users")
       end
     end
 
@@ -152,14 +173,18 @@ RSpec.describe RSpec::Rest do
       path_params id: 1
 
       expect(rest_response.status).to eq(200)
-      expect(last_request[:path]).to eq("/v1/users/1")
+      expect(last_request[:path]).to include("/v1/users/1?")
+      expect(last_request[:path]).to include("locale=en")
+      expect(last_request[:path]).to include("include_details=true")
       expect(last_request[:headers]["X-Leaky-Header"]).to eq("should-not-persist")
     end
 
     get "/" do
       # This example should not see headers or params from previous examples.
       expect(rest_response.status).to eq(200)
-      expect(last_request[:path]).to eq("/v1/users")
+      expect(last_request[:path]).to include("/v1/users?")
+      expect(last_request[:path]).to include("locale=en")
+      expect(last_request[:path]).to include("include_details=true")
 
       # Base headers should still be applied.
       expect(last_request[:headers]["Accept"]).to eq("application/json")
