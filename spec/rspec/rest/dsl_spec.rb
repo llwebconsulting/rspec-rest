@@ -23,6 +23,20 @@ RSpec.describe RSpec::Rest do
     )
   end
 
+  it "raises a clear error when contract name is nil" do
+    expect do
+      self.class.contract(nil) { hash_including("id" => integer) }
+    end.to raise_error(ArgumentError, /contract name cannot be nil/)
+  end
+
+  it "raises a clear error when contract name cannot be symbolized" do
+    invalid_name = Object.new
+
+    expect do
+      self.class.contract(invalid_name) { hash_including("id" => integer) }
+    end.to raise_error(ArgumentError, /must respond to #to_sym/)
+  end
+
   api do
     app RackApp.new
     base_path "/v1"

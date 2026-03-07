@@ -6,7 +6,7 @@ module RSpec
       def contract(name, &definition)
         raise ArgumentError, "contract requires a block definition" unless block_given?
 
-        rest_contracts_local[name.to_sym] = definition
+        rest_contracts_local[normalize_contract_name!(name)] = definition
       end
 
       def rest_contract_definition(name)
@@ -14,6 +14,14 @@ module RSpec
       end
 
       private
+
+      def normalize_contract_name!(name)
+        raise ArgumentError, "contract name cannot be nil" if name.nil?
+        return name.to_sym if name.respond_to?(:to_sym)
+
+        raise ArgumentError,
+              "contract name must respond to #to_sym, got #{name.inspect} (#{name.class})"
+      end
 
       def rest_contracts_local
         @rest_contracts_local ||= {}
