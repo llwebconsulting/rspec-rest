@@ -2,6 +2,7 @@
 
 require_relative "config"
 require_relative "captures"
+require_relative "class_level_presets"
 require_relative "errors"
 require_relative "expectations"
 require_relative "json_selector"
@@ -54,6 +55,8 @@ module RSpec
       end
 
       module ClassMethods
+        include ClassLevelPresets
+
         def api(&)
           builder = ApiConfigBuilder.new(rest_config)
           builder.instance_eval(&)
@@ -62,17 +65,26 @@ module RSpec
 
         def resource(path, &)
           @rest_resource_stack ||= []
+          @rest_preset_stack ||= []
           @rest_resource_stack << path
+          @rest_preset_stack << blank_presets
           class_eval(&)
         ensure
+          @rest_preset_stack.pop
           @rest_resource_stack.pop
         end
 
         HTTP_METHODS.each do |method|
           define_method(method) do |path, &block|
             resource_path = current_resource_path
+            request_presets = deep_dup_presets(current_request_presets)
             it("#{method.to_s.upcase} #{path}") do
-              start_rest_request(method: method, path: path, resource_path: resource_path)
+              start_rest_request(
+                method: method,
+                path: path,
+                resource_path: resource_path,
+                presets: request_presets
+              )
               instance_eval(&block) if block
               execute_rest_request_if_pending
             end
@@ -132,13 +144,17 @@ module RSpec
 
         private
 
-        def start_rest_request(method:, path:, resource_path:)
+        def start_rest_request(method:, path:, resource_path:, presets: nil)
+          effective_presets = presets || { headers: {}, query: {} }
+          preset_headers = (effective_presets[:headers] || {}).dup
+          preset_query = (effective_presets[:query] || {}).dup
+
           @rest_request_state = {
             method: method,
             path: path,
             resource_path: resource_path,
-            headers: {},
-            query: nil,
+            headers: preset_headers,
+            query: preset_query.empty? ? nil : preset_query,
             json: nil,
             multipart: false,
             params: nil,

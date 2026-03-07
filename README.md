@@ -177,6 +177,30 @@ resource "/users" do
 end
 ```
 
+## Shared Request Presets
+
+Define shared request defaults at group/resource scope:
+
+- `with_headers(hash)`
+- `with_query(hash)`
+- `with_auth(token)` (sets `Authorization: Bearer <token>`)
+
+Nested resources inherit presets, and request-level builders (`header`, `query`, `bearer`) can override them.
+
+```ruby
+with_query locale: "en"
+
+resource "/posts" do
+  with_auth "token-123"
+  with_headers "X-Client" => "mobile"
+
+  get "/" do
+    query page: 2
+    expect_status 200
+  end
+end
+```
+
 ## Request Builders
 
 Inside verb blocks:
