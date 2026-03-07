@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose an enhancement to rspec-rest.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the feature request.
+      placeholder: A concise summary of the proposed feature.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or pain point
+      description: What problem are you trying to solve?
+      placeholder: Describe current friction, limitations, or repetitive code.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the API/DSL behavior you want.
+      placeholder: Include suggested method names, examples, and expected output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds or other approaches you considered.
+      placeholder: Describe alternatives and why they are insufficient.
+
+  - type: textarea
+    id: example_usage
+    attributes:
+      label: Example usage (optional)
+      description: Show how this would look in specs.
+      render: ruby
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Requested scope
+      options:
+        - New DSL helper
+        - Expectation/matcher enhancement
+        - Failure output improvement
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Related issues/PRs, links, or notes.

@@ -1,0 +1,92 @@
+name: Bug report
+description: Report a reproducible problem in rspec-rest behavior.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the bug.
+      placeholder: A concise summary of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: What should happen?
+      placeholder: Describe the expected result.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      description: What happened instead?
+      placeholder: Describe the observed result and errors/failures.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable repro.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: sample_spec
+    attributes:
+      label: Minimal spec/example (optional)
+      description: Paste a minimal failing spec or code snippet.
+      render: ruby
+
+  - type: input
+    id: gem_version
+    attributes:
+      label: rspec-rest version
+      placeholder: e.g. 0.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: ruby_version
+    attributes:
+      label: Ruby version
+      placeholder: e.g. 3.3.1
+    validations:
+      required: true
+
+  - type: input
+    id: rspec_version
+    attributes:
+      label: RSpec version (optional)
+      placeholder: e.g. 3.13.x
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework/runtime
+      description: Select the environment where this was observed.
+      options:
+        - Rails
+        - Sinatra
+        - Rack app (custom)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Logs, stack traces, screenshots, or links.
