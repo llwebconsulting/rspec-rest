@@ -213,9 +213,12 @@ Minimum test matrix:
 
 - Update README with:
   - new helper sections
-  - one end-to-end "before vs after" covering auth + pagination + errors
+  - one end-to-end "before vs after" covering auth + presets + JSON path assertions + pagination + errors + multipart uploads
   - multipart example
   - contract example
+- Add a final doc-review checkpoint before `0.2.0` release:
+  - verify README "before vs after" reflects the full implemented `0.2.0` feature set
+  - if any milestone feature is intentionally excluded from the main "after" snippet, include a nearby focused snippet and call it out explicitly
 - Add changelog entry for `0.2.0`.
 
 ---

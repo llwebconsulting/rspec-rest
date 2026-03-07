@@ -113,10 +113,15 @@ RSpec.describe "Posts API" do
     default_format :json
   end
 
+  with_query locale: "en"
+  with_headers "X-Tenant-Id" => "tenant-123"
+
   resource "/posts" do
+    with_auth auth_token
+    with_query per_page: 10
+
     get "/" do
-      bearer auth_token
-      query page: 1, per_page: 10
+      query page: 1
 
       expect_status 200
       expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
@@ -125,14 +130,31 @@ RSpec.describe "Posts API" do
       expect_page_size 10
       expect_max_page_size 20
     end
+
+    get "/{id}" do
+      path_params id: 999_999
+      expect_error status: 404, message: "Post not found"
+    end
+  end
+
+  resource "/uploads" do
+    with_auth auth_token
+
+    post "/" do
+      multipart!
+      file :file, Rails.root.join("spec/fixtures/files/sample_upload.txt"), content_type: "text/plain"
+      expect_status 201
+      expect_json hash_including("filename" => "sample_upload.txt")
+    end
   end
 end
 ```
 
 What improves:
 
-- Request setup is declarative (`api`, `resource`, `query`, `json`).
-- JSON expectations are concise and structure-aware.
+- Request setup is declarative (`api`, `resource`, shared presets, `query`, `multipart!`, `file`).
+- JSON expectations are concise and structure-aware (`expect_json`, `expect_json_at`).
+- Common API outcomes are one-liners (`expect_error`, pagination helpers).
 - Failures include request/response context plus a reproducible `curl`.
 
 ## API Config (`api`)
