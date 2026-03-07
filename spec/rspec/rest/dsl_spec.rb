@@ -36,6 +36,14 @@ RSpec.describe RSpec::Rest do
   with_headers "X-Global" => "global"
   with_query locale: "en"
 
+  contract :user_summary do
+    hash_including("id" => integer, "email" => string, "name" => string)
+  end
+
+  contract :flag_payload do
+    { "enabled" => true }
+  end
+
   resource "/users" do
     with_headers "X-Resource" => "users"
     with_query include_details: "true"
@@ -45,7 +53,7 @@ RSpec.describe RSpec::Rest do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
-      expect_json array_of(hash_including("id" => integer, "email" => string))
+      expect_json array_of(expect_json_contract(:user_summary))
       expect(last_request[:path]).to include("/v1/users?")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
       expect(last_request[:headers]["Authorization"]).to eq("Bearer resource-token")
@@ -138,6 +146,12 @@ RSpec.describe RSpec::Rest do
       end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
     end
 
+    get "/1" do
+      expect do
+        expect_json expect_json_contract(:missing_contract)
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /Unknown contract/)
+    end
+
     get "/" do
       bearer "token-123"
       expect_status 200
@@ -197,7 +211,7 @@ RSpec.describe RSpec::Rest do
   resource "/flags" do
     get "/" do
       expect_status 200
-      expect_json hash_including("enabled" => boolean)
+      expect_json expect_json_contract(:flag_payload)
     end
   end
 

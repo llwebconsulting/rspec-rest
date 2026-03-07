@@ -115,6 +115,9 @@ RSpec.describe "Posts API" do
 
   with_query locale: "en"
   with_headers "X-Tenant-Id" => "tenant-123"
+  contract :post_summary do
+    hash_including("id" => integer, "author" => hash_including("id" => integer))
+  end
 
   resource "/posts" do
     with_auth auth_token
@@ -124,7 +127,7 @@ RSpec.describe "Posts API" do
       query page: 1
 
       expect_status 200
-      expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
+      expect_json array_of(expect_json_contract(:post_summary))
       expect_json_at "$[0].id", posts.first.id
       expect_json_at "$[0].author.id", posts.first.author.id
       expect_page_size 10
@@ -283,6 +286,7 @@ Available expectation helpers:
 - `expect_status(code)`
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
+- `expect_json_contract(name)`
 - `expect_json_at(selector, expected = nil, &block)`
 - `expect_error(status:, message: nil, includes: nil, field: nil, key: "error")`
 - `expect_page_size(size, selector: "$")`
@@ -325,6 +329,26 @@ get "/" do
   expect_page_size 10
   expect_max_page_size 20
   expect_ids_in_order [30, 29, 28, 27, 26, 25, 24, 23, 22, 21]
+end
+```
+
+## Lightweight Contracts
+
+A contract is a named, reusable JSON expectation (usually a response shape matcher).
+Define it once in your spec group, then apply it anywhere with `expect_json_contract`.
+
+```ruby
+contract :post_summary do
+  hash_including(
+    "id" => integer,
+    "title" => string,
+    "author" => hash_including("id" => integer)
+  )
+end
+
+get "/" do
+  expect_status 200
+  expect_json array_of(expect_json_contract(:post_summary))
 end
 ```
 

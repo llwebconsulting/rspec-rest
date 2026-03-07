@@ -17,6 +17,10 @@ RSpec.describe RSpec::Rest do
     default_format :json
   end
 
+  contract :strict_user do
+    hash_including("id" => 999)
+  end
+
   resource "/users" do
     get "/" do
       expect do
@@ -67,6 +71,17 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("Status: 200")
         expect(error.message).to include("Reproduce with:")
         expect(error.message).to include("curl -X GET")
+      }
+    end
+
+    get "/" do
+      expect do
+        expect_json array_of(expect_json_contract(:strict_user))
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("Contract :strict_user failed")
+        expect(error.message).to include("Request:")
+        expect(error.message).to include("GET /v1/users")
+        expect(error.message).to include("Reproduce with:")
       }
     end
 
