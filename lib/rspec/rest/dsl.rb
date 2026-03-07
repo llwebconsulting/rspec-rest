@@ -145,7 +145,7 @@ module RSpec
         private
 
         def start_rest_request(method:, path:, resource_path:, presets: nil)
-          effective_presets = presets || { headers: {}, query: {} }
+          effective_presets = presets || ClassLevelPresets::DEFAULT_PRESETS
           preset_headers = (effective_presets[:headers] || {}).dup
           preset_query = (effective_presets[:query] || {}).dup
 

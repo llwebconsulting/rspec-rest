@@ -185,17 +185,33 @@ Define shared request defaults at group/resource scope:
 - `with_query(hash)`
 - `with_auth(token)` (sets `Authorization: Bearer <token>`)
 
+Use presets when your API requires repeated request context across many endpoints,
+for example auth headers, locale/tenant query params, client/app version headers,
+or other codebase-specific defaults.
+
 Nested resources inherit presets, and request-level builders (`header`, `query`, `bearer`) can override them.
+
+Typical pattern:
+- set broad defaults at top-level (`with_query`, `with_headers`)
+- narrow defaults at resource scope (`with_auth`, resource-specific headers)
+- override per request only when behavior differs
 
 ```ruby
 with_query locale: "en"
+with_headers "X-Tenant-Id" => "tenant-123"
 
 resource "/posts" do
-  with_auth "token-123"
+  with_auth ENV.fetch("API_TOKEN", "token-123")
   with_headers "X-Client" => "mobile"
 
   get "/" do
     query page: 2
+    expect_status 200
+  end
+
+  get "/admin" do
+    header "X-Client", "internal-tool" # request-level override
+    query locale: "fr"                 # request-level override
     expect_status 200
   end
 end
