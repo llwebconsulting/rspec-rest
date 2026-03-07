@@ -7,15 +7,25 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.1.0] - 2026-03-07
+
 ### Added
+- Initial public release of `rspec-rest`.
 - Core runtime:
   - `Config`, `Session`, and `Response` objects
   - JSON parsing with `InvalidJsonError`
 - DSL:
   - `api`, `resource`, `get/post/put/patch/delete`
   - request builders: `header`, `headers`, `query`, `json`, `path_params`
+  - auth builders: `bearer`, `unauthenticated!`
+  - multipart builders: `multipart!`, `file(...)`
+  - shared presets: `with_headers`, `with_query`, `with_auth`
 - Expectations:
-  - `expect_status`, `expect_header`, `expect_json`
+  - `expect_status`, `expect_header`, `expect_json`, `expect_json_at`
+  - error/pagination helpers: `expect_error`, `expect_page_size`, `expect_max_page_size`, `expect_ids_in_order`
+  - reusable contract helpers: `contract`, `expect_json_contract`
   - helper matchers: `integer`, `string`, `boolean`, `array_of`, `hash_including`
 - Captures and selectors:
   - `capture` / `get`
@@ -30,11 +40,6 @@ Semantic Versioning.
   - header/body/query reproduction with redaction
 - Tooling/docs:
   - RSpec + RuboCop + GitHub Actions CI
-  - PR template
+  - PR and issue templates
   - expanded README docs
   - acceptance and formatter specs
-
-## [0.1.0] - TBD
-
-### Added
-- Initial public release of `rspec-rest` (planned)
