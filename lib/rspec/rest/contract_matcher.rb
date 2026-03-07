@@ -2,6 +2,28 @@
 
 module RSpec
   module Rest
+    class UnknownContractMatcher
+      def initialize(message)
+        @message = message
+      end
+
+      def matches?(_actual)
+        false
+      end
+
+      def failure_message
+        @message
+      end
+
+      def failure_message_when_negated
+        @message
+      end
+
+      def description
+        "unknown JSON contract"
+      end
+    end
+
     class ContractMatcher
       def initialize(name:, definition:, context:)
         @name = name

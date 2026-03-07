@@ -11,8 +11,8 @@ module RSpec
         return ContractMatcher.new(name: contract_name, definition: definition, context: self) unless definition.nil?
 
         available = self.class.send(:rest_contracts).keys.map(&:inspect).sort
-        raise ::RSpec::Expectations::ExpectationNotMetError,
-              "Unknown contract #{contract_name.inspect}. Available contracts: [#{available.join(', ')}]"
+        message = "Unknown contract #{contract_name.inspect}. Available contracts: [#{available.join(', ')}]"
+        UnknownContractMatcher.new(message)
       end
     end
   end
