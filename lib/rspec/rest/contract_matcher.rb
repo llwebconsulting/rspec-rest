@@ -32,7 +32,6 @@ module RSpec
       end
 
       def matches?(actual)
-        @actual = actual
         matcher.matches?(actual)
       end
 
