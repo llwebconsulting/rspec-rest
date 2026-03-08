@@ -128,8 +128,8 @@ RSpec.describe "Posts API" do
 
       expect_status 200
       expect_json array_of(expect_json_contract(:post_summary))
-      expect_json_at "$[0].id", posts.first.id
-      expect_json_at "$[0].author.id", posts.first.author.id
+      expect_json_first hash_including("id" => posts.first.id)
+      expect_json_item(0) { |item| expect(item["author"]["id"]).to eq(posts.first.author.id) }
       expect_page_size 10
       expect_max_page_size 20
     end
@@ -288,6 +288,9 @@ Available expectation helpers:
 - `expect_json(expected = nil, &block)`
 - `expect_json_contract(name)`
 - `expect_json_at(selector, expected = nil, &block)`
+- `expect_json_first(expected = nil, &block)`
+- `expect_json_item(index, expected = nil, &block)`
+- `expect_json_last(expected = nil, &block)`
 - `expect_error(status:, message: nil, includes: nil, field: nil, key: "error")`
 - `expect_page_size(size, selector: "$")`
 - `expect_max_page_size(max, selector: "$")`
@@ -310,6 +313,18 @@ Available expectation helpers:
   - `expect_json_at "$.user.email", "jane@example.com"`
 - block mode:
   - `expect_json_at "$.items[0]" { |item| expect(item["id"]).to integer }`
+
+For common array-item checks, use Ruby-style helpers instead of selector strings:
+
+- `expect_json_first(...)`
+- `expect_json_item(index, ...)`
+- `expect_json_last(...)`
+
+```ruby
+expect_json_first hash_including("id" => integer)
+expect_json_item 2, hash_including("name" => "Third")
+expect_json_last { |item| expect(item["id"]).to integer }
+```
 
 `expect_error` is a convenience helper for common API error payload assertions:
 
