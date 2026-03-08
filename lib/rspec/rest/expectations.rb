@@ -29,46 +29,35 @@ module RSpec
       def expect_json(expected = nil, &block)
         with_request_dump_on_failure do
           parsed = rest_response.json
-
-          if block
-            instance_exec(parsed, &block)
-            next parsed
-          end
-
-          next parsed if expected.nil?
-
-          if expected.respond_to?(:matches?)
-            expect(parsed).to expected
-          else
-            expect(parsed).to eq(expected)
-          end
-
-          parsed
+          evaluate_json_value(parsed, expected, &block)
         end
       end
 
       def expect_json_at(selector, expected = nil, &block)
         with_request_dump_on_failure do
           selected = JsonSelector.extract(rest_response.json, selector)
-
-          if block
-            instance_exec(selected, &block)
-            next selected
-          end
-
-          next selected if expected.nil?
-
-          if expected.respond_to?(:matches?)
-            expect(selected).to expected
-          else
-            expect(selected).to eq(expected)
-          end
-
-          selected
+          evaluate_json_value(selected, expected, &block)
         end
       end
 
       private
+
+      def evaluate_json_value(value, expected = nil, &block)
+        if block
+          instance_exec(value, &block)
+          return value
+        end
+
+        return value if expected.nil?
+
+        if expected.respond_to?(:matches?)
+          expect(value).to expected
+        else
+          expect(value).to eq(expected)
+        end
+
+        value
+      end
 
       def with_request_dump_on_failure
         yield

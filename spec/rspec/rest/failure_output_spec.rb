@@ -87,6 +87,17 @@ RSpec.describe RSpec::Rest do
 
     get "/" do
       expect do
+        expect_json_item("0")
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("index to be an Integer")
+        expect(error.message).to include("Request:")
+        expect(error.message).to include("GET /v1/users")
+        expect(error.message).to include("Reproduce with:")
+      }
+    end
+
+    get "/" do
+      expect do
         expect_json array_of(expect_json_contract(:strict_user))
       end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
         expect(error.message).to include("Contract :strict_user failed")

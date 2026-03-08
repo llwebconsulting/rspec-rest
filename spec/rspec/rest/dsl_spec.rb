@@ -169,6 +169,12 @@ RSpec.describe RSpec::Rest do
       end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /out of bounds/)
     end
 
+    get "/" do
+      expect do
+        expect_json_item("0")
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /index to be an Integer/)
+    end
+
     get "/1" do
       expect do
         expect_json expect_json_contract(:missing_contract)

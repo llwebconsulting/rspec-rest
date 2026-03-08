@@ -6,8 +6,9 @@ module RSpec
       def expect_json_item(index, expected = nil, &block)
         with_request_dump_on_failure do
           payload = json_array_payload
-          item = payload.fetch(index)
-          assert_json_value(item, expected, &block)
+          normalized_index = normalize_json_item_index(index)
+          item = payload.fetch(normalized_index)
+          evaluate_json_value(item, expected, &block)
         rescue IndexError
           raise ::RSpec::Expectations::ExpectationNotMetError,
                 "Index #{index.inspect} is out of bounds for JSON array of size #{payload.size}."
@@ -26,7 +27,7 @@ module RSpec
                   "Cannot select last item from an empty JSON array."
           end
 
-          assert_json_value(payload.last, expected, &block)
+          evaluate_json_value(payload.last, expected, &block)
         end
       end
 
@@ -40,21 +41,11 @@ module RSpec
               "Expected JSON payload to be an Array, got #{payload.class}."
       end
 
-      def assert_json_value(value, expected = nil, &block)
-        if block
-          instance_exec(value, &block)
-          return value
-        end
+      def normalize_json_item_index(index)
+        return index if index.is_a?(Integer)
 
-        return value if expected.nil?
-
-        if expected.respond_to?(:matches?)
-          expect(value).to expected
-        else
-          expect(value).to eq(expected)
-        end
-
-        value
+        raise ::RSpec::Expectations::ExpectationNotMetError,
+              "Expected JSON item index to be an Integer, got #{index.inspect} (#{index.class})."
       end
     end
   end
