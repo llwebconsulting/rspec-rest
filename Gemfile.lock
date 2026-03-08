@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rspec-rest (0.1.0)
+    rspec-rest (0.2.0)
       rack-test (~> 2.1)
 
 GEM
