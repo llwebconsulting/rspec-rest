@@ -118,9 +118,10 @@ module RSpec
         def build_example_name(method:, path:, resource_path:, description:)
           route = compose_route_for_example(resource_path: resource_path, endpoint_path: path)
           base = "#{method.to_s.upcase} #{route}"
-          return base if description.nil? || description.to_s.strip.empty?
+          normalized_description = description.to_s.strip
+          return base if normalized_description.empty?
 
-          "#{base} - #{description}"
+          "#{base} - #{normalized_description}"
         end
 
         def compose_route_for_example(resource_path:, endpoint_path:)
