@@ -123,7 +123,7 @@ RSpec.describe "Posts API" do
     with_auth auth_token
     with_query per_page: 10
 
-    get "/" do
+    get "/", "returns first page of posts for authenticated user" do
       query page: 1
 
       expect_status 200
@@ -188,6 +188,7 @@ Supported config:
 
 - `resource "/users" do ... end`
 - `get`, `post`, `put`, `patch`, `delete`
+  - optional form: `get(path, description = nil) { ... }`
 
 Resource paths are composable and support placeholders:
 
@@ -201,6 +202,19 @@ resource "/users" do
   end
 end
 ```
+
+Example with an explicit behavior name:
+
+```ruby
+resource "/users" do
+  get "/", "returns public users for authenticated client" do
+    expect_status 200
+  end
+end
+```
+
+RSpec example output uses the composed full route (including `base_path`) and appends the optional description, for example:
+- `GET /v1/users - returns public users for authenticated client`
 
 ## Shared Request Presets
 
