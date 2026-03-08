@@ -7,6 +7,7 @@ require_relative "class_level_presets"
 require_relative "errors"
 require_relative "expectations"
 require_relative "json_selector"
+require_relative "path_composer"
 require_relative "request_builders"
 require_relative "session"
 module RSpec
@@ -125,9 +126,11 @@ module RSpec
         end
 
         def compose_route_for_example(resource_path:, endpoint_path:)
-          segments = [rest_config.base_path, resource_path, endpoint_path].compact.map(&:to_s)
-          normalized = segments.map { |segment| segment.gsub(%r{\A/+|/+\z}, "") }.reject(&:empty?)
-          "/#{normalized.join('/')}"
+          PathComposer.compose(
+            base_path: rest_config.base_path,
+            resource_path: resource_path,
+            endpoint_path: endpoint_path
+          )
         end
 
         def current_resource_path

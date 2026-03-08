@@ -63,7 +63,7 @@ RSpec.describe RSpec::Rest do
     with_query include_details: "true"
     with_auth "resource-token"
 
-    get "/", "returns users collection" do
+    get "/", "  returns users collection  " do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
