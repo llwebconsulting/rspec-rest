@@ -5,6 +5,7 @@ require_relative "formatters/request_recorder"
 require_relative "error_expectations"
 require_relative "contract_expectations"
 require_relative "header_expectations"
+require_relative "json_item_expectations"
 require_relative "json_selector"
 require_relative "json_type_helpers"
 require_relative "pagination_expectations"
@@ -15,6 +16,7 @@ module RSpec
       include ContractExpectations
       include ErrorExpectations
       include HeaderExpectations
+      include JsonItemExpectations
       include JsonTypeHelpers
       include PaginationExpectations
 

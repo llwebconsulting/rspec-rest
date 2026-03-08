@@ -68,6 +68,9 @@ RSpec.describe RSpec::Rest do
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
       expect_json array_of(expect_json_contract(:user_summary))
+      expect_json_first hash_including("id" => integer)
+      expect_json_item 1, hash_including("id" => 2)
+      expect_json_last hash_including("id" => integer, "email" => string)
       expect(last_request[:path]).to include("/v1/users?")
       expect(last_request[:headers]["Accept"]).to eq("application/json")
       expect(last_request[:headers]["Authorization"]).to eq("Bearer resource-token")
@@ -160,6 +163,12 @@ RSpec.describe RSpec::Rest do
       end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
     end
 
+    get "/" do
+      expect do
+        expect_json_item(99)
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /out of bounds/)
+    end
+
     get "/1" do
       expect do
         expect_json expect_json_contract(:missing_contract)
@@ -226,6 +235,12 @@ RSpec.describe RSpec::Rest do
     get "/" do
       expect_status 200
       expect_json expect_json_contract(:flag_payload)
+    end
+
+    get "/" do
+      expect do
+        expect_json_first
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /payload to be an Array/)
     end
   end
 
