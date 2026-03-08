@@ -123,7 +123,7 @@ RSpec.describe "Posts API" do
     with_auth auth_token
     with_query per_page: 10
 
-    get "/" do
+    get "/", "returns first page of posts for authenticated user" do
       query page: 1
 
       expect_status 200
@@ -188,6 +188,7 @@ Supported config:
 
 - `resource "/users" do ... end`
 - `get`, `post`, `put`, `patch`, `delete`
+  - optional form: `get(path, description = nil) { ... }`
 
 Resource paths are composable and support placeholders:
 
@@ -202,6 +203,20 @@ resource "/users" do
 end
 ```
 
+Example with an explicit behavior name:
+
+```ruby
+resource "/users" do
+  get "/", "returns public users for authenticated client" do
+    expect_status 200
+  end
+end
+```
+
+RSpec example output uses the composed full route (including `base_path`) and appends the optional description, for example:
+- `GET /v1/users - returns public users for authenticated client`
+
+Note: Example names (including `base_path`) are composed when the verb macro is evaluated. To ensure the example names include `base_path`, declare your `api` (and its `base_path`) before defining `resource` blocks and their verbs. If you configure `api`/`base_path` afterward, requests will use the configured `base_path`, but the previously defined example names will not reflect it.
 ## Shared Request Presets
 
 Define shared request defaults at group/resource scope:

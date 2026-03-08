@@ -63,7 +63,7 @@ RSpec.describe RSpec::Rest do
     with_query include_details: "true"
     with_auth "resource-token"
 
-    get "/" do
+    get "/", "  returns users collection  " do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
@@ -333,5 +333,13 @@ RSpec.describe RSpec::Rest do
         rest_response
       end.to raise_error(ArgumentError, /Cannot use json\(\.\.\.\) with multipart! requests/)
     end
+  end
+
+  it "builds full-path example names and supports optional descriptions" do
+    descriptions = self.class.examples.map(&:description)
+
+    expect(descriptions).to include("GET /v1/users - returns users collection")
+    expect(descriptions).to include("GET /v1/users/{id}")
+    expect(descriptions).to include("GET /v1/users/{id}/posts")
   end
 end

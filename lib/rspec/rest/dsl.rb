@@ -7,6 +7,7 @@ require_relative "class_level_presets"
 require_relative "errors"
 require_relative "expectations"
 require_relative "json_selector"
+require_relative "path_composer"
 require_relative "request_builders"
 require_relative "session"
 module RSpec
@@ -77,10 +78,16 @@ module RSpec
         end
 
         HTTP_METHODS.each do |method|
-          define_method(method) do |path, &block|
+          define_method(method) do |path, description = nil, &block|
             resource_path = current_resource_path
             request_presets = deep_dup_presets(current_request_presets)
-            it("#{method.to_s.upcase} #{path}") do
+            example_name = build_example_name(
+              method: method,
+              path: path,
+              resource_path: resource_path,
+              description: description
+            )
+            it(example_name) do
               start_rest_request(
                 method: method,
                 path: path,
@@ -108,6 +115,23 @@ module RSpec
         end
 
         private
+
+        def build_example_name(method:, path:, resource_path:, description:)
+          route = compose_route_for_example(resource_path: resource_path, endpoint_path: path)
+          base = "#{method.to_s.upcase} #{route}"
+          normalized_description = description.to_s.strip
+          return base if normalized_description.empty?
+
+          "#{base} - #{normalized_description}"
+        end
+
+        def compose_route_for_example(resource_path:, endpoint_path:)
+          PathComposer.compose(
+            base_path: rest_config.base_path,
+            resource_path: resource_path,
+            endpoint_path: endpoint_path
+          )
+        end
 
         def current_resource_path
           stack = @rest_resource_stack || []

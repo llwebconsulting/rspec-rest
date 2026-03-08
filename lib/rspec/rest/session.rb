@@ -4,6 +4,7 @@ require "json"
 require "rack/test"
 require "rack/utils"
 require_relative "errors"
+require_relative "path_composer"
 require_relative "response"
 
 module RSpec
@@ -123,9 +124,11 @@ module RSpec
       end
 
       def build_path(base_path, resource_path, endpoint_path)
-        segments = [base_path, resource_path, endpoint_path].compact.map(&:to_s)
-        normalized = segments.map { |segment| segment.gsub(%r{\A/+|/+\z}, "") }.reject(&:empty?)
-        "/#{normalized.join('/')}"
+        PathComposer.compose(
+          base_path: base_path,
+          resource_path: resource_path,
+          endpoint_path: endpoint_path
+        )
       end
 
       def build_url(base_url, path)
