@@ -69,7 +69,7 @@ end
 
 ## Before and After (Rack::Test to rspec-rest)
 
-The example below shows the same behavior test written two ways.
+The first two examples below test the same behavior in two styles.
 
 Before (`Rack::Test` + manual response parsing):
 
@@ -113,25 +113,54 @@ RSpec.describe "Posts API" do
     default_format :json
   end
 
-  with_query locale: "en"
-  with_headers "X-Tenant-Id" => "tenant-123"
+  resource "/posts" do
+    with_auth auth_token
+
+    get "/", "returns posts page 1" do
+      query page: 1, per_page: 10
+
+      expect_status 200
+      expect_json array_of(hash_including("id" => integer, "author" => hash_including("id" => integer)))
+      expect_json_first hash_including("id" => posts.first.id)
+      expect_json_item(0) { |item| expect(item["author"]["id"]).to eq(posts.first.author.id) }
+    end
+  end
+end
+```
+
+What improves in the apples-to-apples rewrite:
+
+- Request setup is declarative (`api`, `resource`, `with_auth`, `query`).
+- JSON assertions read closer to the business intent (`expect_json_first`, `expect_json_item`).
+- Failure output includes request/response context and a reproducible `curl`.
+
+Beyond the baseline rewrite, `rspec-rest` can also express additional API concerns
+with concise helpers:
+
+```ruby
+RSpec.describe "Posts API" do
+  include RSpec::Rest
+
+  let(:auth_token) { "test-token" }
+
+  api do
+    app MyApp::Base
+    base_path "/api/v1"
+    default_format :json
+  end
+
   contract :post_summary do
     hash_including("id" => integer, "author" => hash_including("id" => integer))
   end
 
   resource "/posts" do
     with_auth auth_token
-    with_query per_page: 10
 
-    get "/", "returns first page of posts for authenticated user" do
-      query page: 1
-
+    get "/" do
+      query page: 1, per_page: 10
       expect_status 200
       expect_json array_of(expect_json_contract(:post_summary))
-      expect_json_first hash_including("id" => posts.first.id)
-      expect_json_item(0) { |item| expect(item["author"]["id"]).to eq(posts.first.author.id) }
       expect_page_size 10
-      expect_max_page_size 20
     end
 
     get "/{id}" do
@@ -152,13 +181,6 @@ RSpec.describe "Posts API" do
   end
 end
 ```
-
-What improves:
-
-- Request setup is declarative (`api`, `resource`, shared presets, `query`, `multipart!`, `file`).
-- JSON expectations are concise and structure-aware (`expect_json`, `expect_json_at`).
-- Common API outcomes are one-liners (`expect_error`, pagination helpers).
-- Failures include request/response context plus a reproducible `curl`.
 
 ## API Config (`api`)
 
@@ -423,6 +445,44 @@ When an expectation fails, output includes:
 
 Sensitive headers are redacted by default and can be customized via
 `redact_headers`.
+
+Example (truncated):
+
+```text
+expected: 201
+     got: 422
+
+Request:
+POST /api/v1/posts
+Headers:
+  Accept: application/json
+  Authorization: [REDACTED]
+  Content-Type: application/json
+Body:
+{
+  "title": "",
+  "body": "Example"
+}
+
+Response:
+Status: 422
+Headers:
+  Content-Type: application/json
+Body:
+{
+  "error": "Validation failed",
+  "details": {
+    "title": ["can't be blank"]
+  }
+}
+
+Reproduce with:
+curl -X POST 'http://localhost:3000/api/v1/posts' -H 'Accept: application/json' -H 'Authorization: [REDACTED]' -H 'Content-Type: application/json' -d '{"title":"","body":"Example"}'
+```
+
+Copy that `curl` command to:
+
+- run the same request directly in your terminal for fast manual debugging.
 
 ## Contributing
 
