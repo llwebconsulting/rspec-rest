@@ -9,6 +9,36 @@ Semantic Versioning.
 
 No changes yet.
 
+## [0.3.0] - 2026-03-10
+
+### Added
+- Contract lookup helper for matcher composition in examples:
+  - `contract(:name)`
+- Internal deprecation utility for gem APIs:
+  - `RSpec::Rest::Deprecation.warn(key:, message:)`
+  - once-per-key warning emission in RSpec output.
+- Keyword request description support on verb DSL calls:
+  - `get(path, description: "...") { ... }` (and same for other verbs).
+
+### Changed
+- Failure-time `curl` output now uses an auth token environment placeholder for redacted auth-like headers, improving copy/paste usability:
+  - `Authorization: Bearer $API_AUTH_TOKEN`
+- Redacted auth scheme prefixes are preserved in `curl` output for `Authorization` and `Proxy-Authorization` (for example `Basic`, `Digest`).
+- README examples now prefer:
+  - `contract(:name)` over nested `expect_json_contract(...)`
+  - keyword request descriptions (`description:`).
+- Added README RuboCop compatibility guidance for:
+  - `Rails/HttpPositionalArguments`
+  - `RSpec/EmptyExampleGroup`.
+
+### Deprecated
+- `expect_json_contract(name)` is deprecated and scheduled for removal in `1.0`.
+  Use `contract(:name)` for contract lookup in examples.
+- Positional verb descriptions are deprecated and scheduled for removal in `1.0`:
+  - `get(path, "description") { ... }`
+  Use keyword descriptions instead:
+  - `get(path, description: "...") { ... }`
+
 ## [0.2.0] - 2026-03-08
 
 ### Added
