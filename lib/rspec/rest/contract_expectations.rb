@@ -50,7 +50,7 @@ module RSpec
       end
 
       def name_error_message(name, lookup_name:)
-        lookup_hint = lookup_name == :expect_json_contract ? "expect_json_contract" : "contract lookup"
+        lookup_hint = lookup_name == :expect_json_contract ? "expect_json_contract" : "contract(:name)"
         "Invalid contract name #{name.inspect} (#{name.class}). " \
           "#{lookup_hint} requires a contract name that responds to #to_sym."
       end
