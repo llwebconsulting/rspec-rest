@@ -483,7 +483,7 @@ curl -X POST 'http://localhost:3000/api/v1/posts' -H 'Accept: application/json' 
 Before running an authenticated command, set your token:
 
 ```bash
-export API_AUTH_TOKEN="[REDACTED]"
+export API_AUTH_TOKEN="your_token_here"
 ```
 
 Then paste the generated `curl` command directly in your terminal for fast manual debugging.
