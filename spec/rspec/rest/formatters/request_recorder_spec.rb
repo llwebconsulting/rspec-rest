@@ -62,6 +62,25 @@ RSpec.describe RSpec::Rest::Formatters::RequestRecorder do
     expect(curl).not_to include("secret-key")
   end
 
+  it "preserves auth schemes for redacted authorization headers" do
+    curl = described_class.new(
+      last_request: {
+        method: "GET",
+        url: "http://example.org/v1/users",
+        headers: {
+          "Authorization" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l",
+          "Proxy-Authorization" => "Digest username=\"Mufasa\""
+        },
+        body: nil
+      }
+    ).to_curl
+
+    expect(curl).to include("-H \"Authorization: Basic $API_AUTH_TOKEN\"")
+    expect(curl).to include("-H \"Proxy-Authorization: Digest $API_AUTH_TOKEN\"")
+    expect(curl).not_to include("YWxhZGRpbjpvcGVuc2VzYW1l")
+    expect(curl).not_to include("username=\"Mufasa\"")
+  end
+
   it "supports custom redaction lists" do
     curl = described_class.new(
       last_request: {

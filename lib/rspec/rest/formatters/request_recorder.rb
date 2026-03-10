@@ -17,6 +17,10 @@ module RSpec
           x-api-key
           x-auth-token
         ].freeze
+        AUTH_SCHEME_HEADER_KEYS = %w[
+          authorization
+          proxy-authorization
+        ].freeze
 
         def initialize(last_request:, redacted_headers: nil)
           @last_request = last_request || {}
@@ -71,7 +75,7 @@ module RSpec
 
         def redacted_value(key, value)
           return value unless @redacted_headers.include?(key.to_s.downcase)
-          return auth_header_placeholder(value) if auth_header?(key)
+          return auth_header_placeholder(key, value) if auth_header?(key)
 
           "[REDACTED]"
         end
@@ -80,9 +84,12 @@ module RSpec
           AUTH_HEADER_KEYS.include?(key.to_s.downcase)
         end
 
-        def auth_header_placeholder(value)
+        def auth_header_placeholder(key, value)
           value_string = value.to_s
-          return "Bearer $#{AUTH_TOKEN_ENV_VAR}" if value_string.match?(/\Abearer\s+/i)
+          if AUTH_SCHEME_HEADER_KEYS.include?(key.to_s.downcase)
+            scheme_match = value_string.match(/\A([A-Za-z][A-Za-z0-9._-]*)\s+/)
+            return "#{scheme_match[1]} $#{AUTH_TOKEN_ENV_VAR}" if scheme_match
+          end
 
           "$#{AUTH_TOKEN_ENV_VAR}"
         end
