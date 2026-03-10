@@ -37,6 +37,25 @@ RSpec.describe RSpec::Rest do
     end.to raise_error(ArgumentError, /must respond to #to_sym/)
   end
 
+  it "raises when both positional and keyword descriptions are provided" do
+    expect do
+      self.class.get("/", "old style", description: "new style")
+    end.to raise_error(ArgumentError, /received both positional and keyword descriptions/)
+  end
+
+  it "emits a deprecation warning for positional request descriptions" do
+    allow(RSpec::Rest::Deprecation).to receive(:warn)
+
+    self.class.send(:warn_on_deprecated_positional_description, :get)
+
+    expect(RSpec::Rest::Deprecation).to have_received(:warn).with(
+      hash_including(
+        key: :verb_positional_description,
+        message: %r{get\(path, description\).*Rails/HttpPositionalArguments}m
+      )
+    )
+  end
+
   api do
     app RackApp.new
     base_path "/v1"
@@ -90,7 +109,7 @@ RSpec.describe RSpec::Rest do
     with_query include_details: "true"
     with_auth "resource-token"
 
-    get "/", "  returns users collection  " do
+    get "/", description: "  returns users collection  " do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
@@ -105,6 +124,10 @@ RSpec.describe RSpec::Rest do
       expect(last_request[:headers]["X-Resource"]).to eq("users")
       expect(last_request[:path]).to include("locale=en")
       expect(last_request[:path]).to include("include_details=true")
+    end
+
+    get "/", "supports positional descriptions temporarily" do
+      expect_status 200
     end
 
     get "/{id}" do
