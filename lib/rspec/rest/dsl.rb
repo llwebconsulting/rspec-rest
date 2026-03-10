@@ -56,64 +56,7 @@ module RSpec
         end
       end
 
-      module ClassMethods
-        include ClassLevelContracts
-        include ClassLevelPresets
-
-        def api(&)
-          builder = ApiConfigBuilder.new(rest_config)
-          builder.instance_eval(&)
-          @rest_config = builder.to_config
-        end
-
-        def resource(path, &)
-          @rest_resource_stack ||= []
-          @rest_preset_stack ||= []
-          @rest_resource_stack << path
-          @rest_preset_stack << blank_presets
-          class_eval(&)
-        ensure
-          @rest_preset_stack.pop
-          @rest_resource_stack.pop
-        end
-
-        HTTP_METHODS.each do |method|
-          define_method(method) do |path, description = nil, &block|
-            resource_path = current_resource_path
-            request_presets = deep_dup_presets(current_request_presets)
-            example_name = build_example_name(
-              method: method,
-              path: path,
-              resource_path: resource_path,
-              description: description
-            )
-            it(example_name) do
-              start_rest_request(
-                method: method,
-                path: path,
-                resource_path: resource_path,
-                presets: request_presets
-              )
-              instance_eval(&block) if block
-              execute_rest_request_if_pending
-            end
-          end
-        end
-
-        def rest_config
-          return @rest_config if instance_variable_defined?(:@rest_config)
-
-          parent = superclass.respond_to?(:rest_config) ? superclass.rest_config : Config.new
-          Config.new(
-            app: parent.app,
-            base_path: parent.base_path,
-            base_headers: parent.base_headers,
-            default_format: parent.default_format,
-            redact_headers: parent.redact_headers,
-            base_url: parent.base_url
-          )
-        end
-
+      module RouteNamingSupport
         private
 
         def build_example_name(method:, path:, resource_path:, description:)
@@ -144,6 +87,112 @@ module RSpec
 
           path = normalized_segments.join("/")
           first_had_leading_slash && !path.empty? ? "/#{path}" : path
+        end
+      end
+
+      module DescriptionArgumentSupport
+        private
+
+        def warn_on_deprecated_positional_description(_method)
+          Deprecation.warn(
+            key: :verb_positional_description,
+            message: "Positional request descriptions (for example: get(path, description)) are deprecated and " \
+                     "will be removed in 1.0. Use keyword descriptions " \
+                     "(for example: get(path, description: \"...\")). " \
+                     "This avoids RuboCop Rails/HttpPositionalArguments false-positives."
+          )
+        end
+
+        def resolve_description_options(method:, positional_description:, keyword_description:)
+          if !positional_description.nil? && !keyword_description.nil?
+            raise ArgumentError,
+                  "#{method}(...) received both positional and keyword descriptions. " \
+                  "Use only `description:`."
+          end
+
+          {
+            description: keyword_description.nil? ? positional_description : keyword_description,
+            using_positional_description: !positional_description.nil? && keyword_description.nil?
+          }
+        end
+      end
+
+      module ClassMethods
+        include ClassLevelContracts
+        include ClassLevelPresets
+        include RouteNamingSupport
+        include DescriptionArgumentSupport
+
+        def api(&)
+          builder = ApiConfigBuilder.new(rest_config)
+          builder.instance_eval(&)
+          @rest_config = builder.to_config
+        end
+
+        def resource(path, &)
+          @rest_resource_stack ||= []
+          @rest_preset_stack ||= []
+          @rest_resource_stack << path
+          @rest_preset_stack << blank_presets
+          class_eval(&)
+        ensure
+          @rest_preset_stack.pop
+          @rest_resource_stack.pop
+        end
+
+        HTTP_METHODS.each do |method|
+          define_method(method) do |path, positional_description = nil, description: nil, &block|
+            description_options = resolve_verb_description_options(method, positional_description, description)
+            resource_path = current_resource_path
+            request_presets = deep_dup_presets(current_request_presets)
+            example_name = build_example_name(
+              method: method,
+              path: path,
+              resource_path: resource_path,
+              description: description_options[:description]
+            )
+            it(example_name) do
+              start_rest_request(
+                method: method,
+                path: path,
+                resource_path: resource_path,
+                presets: request_presets
+              )
+              instance_eval(&block) if block
+              self.class.send(:emit_positional_description_warning, method, description_options)
+              execute_rest_request_if_pending
+            end
+          end
+        end
+
+        def rest_config
+          return @rest_config if instance_variable_defined?(:@rest_config)
+
+          parent = superclass.respond_to?(:rest_config) ? superclass.rest_config : Config.new
+          Config.new(
+            app: parent.app,
+            base_path: parent.base_path,
+            base_headers: parent.base_headers,
+            default_format: parent.default_format,
+            redact_headers: parent.redact_headers,
+            base_url: parent.base_url
+          )
+        end
+
+        private
+
+        def emit_positional_description_warning(method, description_options)
+          return unless description_options[:using_positional_description]
+
+          send(:warn_on_deprecated_positional_description, method)
+        end
+
+        def resolve_verb_description_options(method, positional_description, description)
+          resolve_description_options(
+            method: method,
+            positional_description: positional_description,
+            keyword_description: description
+          )
         end
       end
 

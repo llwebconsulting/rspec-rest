@@ -112,7 +112,7 @@ RSpec.describe "Posts API" do
   resource "/posts" do
     with_auth auth_token
 
-    get "/", "returns posts page 1" do
+    get "/", description: "returns posts page 1" do
       query page: 1, per_page: 10
 
       expect_status 200
@@ -206,7 +206,9 @@ Supported config:
 
 - `resource "/users" do ... end`
 - `get`, `post`, `put`, `patch`, `delete`
-  - optional form: `get(path, description = nil) { ... }`
+  - preferred description form: `get(path, description: "...") { ... }`
+  - legacy positional form `get(path, "description")` is deprecated and will be removed in `1.0`.
+    It is deprecated to avoid `Rails/HttpPositionalArguments` false-positives in RuboCop.
 
 Resource paths are composable and support placeholders:
 
@@ -225,7 +227,7 @@ Example with an explicit behavior name:
 
 ```ruby
 resource "/users" do
-  get "/", "returns public users for authenticated client" do
+  get "/", description: "returns public users for authenticated client" do
     expect_status 200
   end
 end
