@@ -34,14 +34,67 @@ RSpec.describe RSpec::Rest::Formatters::RequestRecorder do
         method: "GET",
         url: "http://example.org/v1/users",
         headers: {
-          "Authorization" => "Bearer secret"
+          "Authorization" => "Bearer secret",
+          "Cookie" => "session=abc123"
         },
         body: nil
       }
     ).to_curl
 
-    expect(curl).to include("-H 'Authorization: [REDACTED]'")
+    expect(curl).to include("-H \"Authorization: Bearer $API_AUTH_TOKEN\"")
+    expect(curl).to include("-H 'Cookie: [REDACTED]'")
     expect(curl).not_to include("Bearer secret")
+  end
+
+  it "uses a token env var placeholder for non-bearer redacted auth headers" do
+    curl = described_class.new(
+      last_request: {
+        method: "GET",
+        url: "http://example.org/v1/users",
+        headers: {
+          "X-Api-Key" => "secret-key"
+        },
+        body: nil
+      }
+    ).to_curl
+
+    expect(curl).to include("-H \"X-Api-Key: $API_AUTH_TOKEN\"")
+    expect(curl).not_to include("secret-key")
+  end
+
+  it "uses a token env var placeholder for X-Auth-Token headers" do
+    curl = described_class.new(
+      last_request: {
+        method: "GET",
+        url: "http://example.org/v1/users",
+        headers: {
+          "X-Auth-Token" => "secret-token"
+        },
+        body: nil
+      }
+    ).to_curl
+
+    expect(curl).to include("-H \"X-Auth-Token: $API_AUTH_TOKEN\"")
+    expect(curl).not_to include("secret-token")
+  end
+
+  it "preserves auth schemes for redacted authorization headers" do
+    curl = described_class.new(
+      last_request: {
+        method: "GET",
+        url: "http://example.org/v1/users",
+        headers: {
+          "Authorization" => "Basic YWxhZGRpbjpvcGVuc2VzYW1l",
+          "Proxy-Authorization" => "Digest username=\"Mufasa\""
+        },
+        body: nil
+      }
+    ).to_curl
+
+    expect(curl).to include("-H \"Authorization: Basic $API_AUTH_TOKEN\"")
+    expect(curl).to include("-H \"Proxy-Authorization: Digest $API_AUTH_TOKEN\"")
+    expect(curl).not_to include("YWxhZGRpbjpvcGVuc2VzYW1l")
+    expect(curl).not_to include("username=\"Mufasa\"")
   end
 
   it "supports custom redaction lists" do

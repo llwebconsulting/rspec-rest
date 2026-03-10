@@ -477,12 +477,16 @@ Body:
 }
 
 Reproduce with:
-curl -X POST 'http://localhost:3000/api/v1/posts' -H 'Accept: application/json' -H 'Authorization: [REDACTED]' -H 'Content-Type: application/json' -d '{"title":"","body":"Example"}'
+curl -X POST 'http://localhost:3000/api/v1/posts' -H 'Accept: application/json' -H "Authorization: Bearer $API_AUTH_TOKEN" -H 'Content-Type: application/json' -d '{"title":"","body":"Example"}'
 ```
 
-Copy that `curl` command to:
+Before running an authenticated command, set your token:
 
-- run the same request directly in your terminal for fast manual debugging.
+```bash
+export API_AUTH_TOKEN="your_token_here"
+```
+
+Then paste the generated `curl` command directly in your terminal for fast manual debugging.
 
 ## Contributing
 
