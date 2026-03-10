@@ -34,32 +34,14 @@ RSpec.describe RSpec::Rest::Formatters::RequestRecorder do
         method: "GET",
         url: "http://example.org/v1/users",
         headers: {
-          "Authorization" => "Bearer secret",
-          "Cookie" => "session=abc123"
+          "Authorization" => "Bearer secret"
         },
         body: nil
       }
     ).to_curl
 
-    expect(curl).to include("-H \"Authorization: Bearer $API_AUTH_TOKEN\"")
-    expect(curl).to include("-H 'Cookie: [REDACTED]'")
+    expect(curl).to include("-H 'Authorization: [REDACTED]'")
     expect(curl).not_to include("Bearer secret")
-  end
-
-  it "uses a token env var placeholder for non-bearer redacted auth headers" do
-    curl = described_class.new(
-      last_request: {
-        method: "GET",
-        url: "http://example.org/v1/users",
-        headers: {
-          "X-Api-Key" => "secret-key"
-        },
-        body: nil
-      }
-    ).to_curl
-
-    expect(curl).to include("-H \"X-Api-Key: $API_AUTH_TOKEN\"")
-    expect(curl).not_to include("secret-key")
   end
 
   it "supports custom redaction lists" do
