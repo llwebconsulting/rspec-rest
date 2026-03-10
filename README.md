@@ -155,7 +155,7 @@ RSpec.describe "Posts API" do
     get "/" do
       query page: 1, per_page: 10
       expect_status 200
-      expect_json array_of(expect_json_contract(:post_summary))
+      expect_json array_of(contract(:post_summary))
       expect_page_size 10
     end
 
@@ -319,7 +319,8 @@ Available expectation helpers:
 - `expect_status(code)`
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
-- `expect_json_contract(name)`
+- `contract(name)` (lookup helper for reusable JSON contracts)
+- `expect_json_contract(name)` (deprecated; use `contract(name)`)
 - `expect_json_at(selector, expected = nil, &block)`
 - `expect_json_first(expected = nil, &block)`
 - `expect_json_item(index, expected = nil, &block)`
@@ -383,7 +384,7 @@ end
 ## Lightweight Contracts
 
 A contract is a named, reusable JSON expectation (usually a response shape matcher).
-Define it once in your spec group, then apply it anywhere with `expect_json_contract`.
+Define it once in your spec group, then apply it anywhere with `contract(:name)`.
 
 ```ruby
 contract :post_summary do
@@ -396,7 +397,7 @@ end
 
 get "/" do
   expect_status 200
-  expect_json array_of(expect_json_contract(:post_summary))
+  expect_json array_of(contract(:post_summary))
 end
 ```
 

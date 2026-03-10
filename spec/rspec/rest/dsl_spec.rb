@@ -71,6 +71,20 @@ RSpec.describe RSpec::Rest do
     )
   end
 
+  it "does not mark contract(:name) lookup as deprecated" do
+    allow(RSpec::Rest::Deprecation).to receive(:warn)
+
+    contract(:user_summary)
+
+    expect(RSpec::Rest::Deprecation).not_to have_received(:warn)
+  end
+
+  it "raises when contract lookup receives a block in example context" do
+    expect do
+      contract(:inline) { hash_including("id" => integer) }
+    end.to raise_error(ArgumentError, /does not accept a block/)
+  end
+
   resource "/users" do
     with_headers "X-Resource" => "users"
     with_query include_details: "true"
@@ -80,7 +94,7 @@ RSpec.describe RSpec::Rest do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"
-      expect_json array_of(expect_json_contract(:user_summary))
+      expect_json array_of(contract(:user_summary))
       expect_json_first hash_including("id" => integer)
       expect_json_item 1, hash_including("id" => 2)
       expect_json_last hash_including("id" => integer, "email" => string)
@@ -190,7 +204,7 @@ RSpec.describe RSpec::Rest do
 
     get "/1" do
       expect do
-        expect_json expect_json_contract(:missing_contract)
+        expect_json contract(:missing_contract)
       end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /Unknown contract/)
     end
 
@@ -253,7 +267,7 @@ RSpec.describe RSpec::Rest do
   resource "/flags" do
     get "/" do
       expect_status 200
-      expect_json expect_json_contract(:flag_payload)
+      expect_json contract(:flag_payload)
     end
 
     get "/" do
