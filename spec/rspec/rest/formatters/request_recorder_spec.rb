@@ -62,6 +62,22 @@ RSpec.describe RSpec::Rest::Formatters::RequestRecorder do
     expect(curl).not_to include("secret-key")
   end
 
+  it "uses a token env var placeholder for X-Auth-Token headers" do
+    curl = described_class.new(
+      last_request: {
+        method: "GET",
+        url: "http://example.org/v1/users",
+        headers: {
+          "X-Auth-Token" => "secret-token"
+        },
+        body: nil
+      }
+    ).to_curl
+
+    expect(curl).to include("-H \"X-Auth-Token: $API_AUTH_TOKEN\"")
+    expect(curl).not_to include("secret-token")
+  end
+
   it "preserves auth schemes for redacted authorization headers" do
     curl = described_class.new(
       last_request: {
