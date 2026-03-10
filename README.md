@@ -237,6 +237,45 @@ RSpec example output uses the composed full route (including `base_path`) and ap
 - `GET /v1/users - returns public users for authenticated client`
 
 Note: Example names (including `base_path`) are composed when the verb macro is evaluated. To ensure the example names include `base_path`, declare your `api` (and its `base_path`) before defining `resource` blocks and their verbs. If you configure `api`/`base_path` afterward, requests will use the configured `base_path`, but the previously defined example names will not reflect it.
+
+## RuboCop Compatibility
+
+`rspec-rest` verbs (`get`, `post`, etc.) define examples via DSL macros, and can trigger
+false-positives in some RuboCop cops:
+
+- `Rails/HttpPositionalArguments`: use keyword descriptions (`description:`), not positional descriptions.
+- `RSpec/EmptyExampleGroup`: a `context` that only contains `resource` + verb DSL may be flagged as empty.
+
+Recommended mitigation is scoped configuration for files that use `rspec-rest`:
+
+```yaml
+# .rubocop.yml
+RSpec/EmptyExampleGroup:
+  Exclude:
+    - "spec/api/rest/**/*"
+```
+
+If you only have a few affected groups, use an inline disable around the DSL group:
+
+```ruby
+# rubocop:disable RSpec/EmptyExampleGroup
+context "when authenticated" do
+  resource "/posts" do
+    get "/", description: "returns posts" do
+      expect_status 200
+    end
+  end
+end
+# rubocop:enable RSpec/EmptyExampleGroup
+```
+
+Prefer scoped exclusions/disables over broad project-wide disables so non-DSL specs
+keep full lint coverage.
+
+We are also considering a dedicated RuboCop extension for `rspec-rest` (for example,
+`rubocop-rspec-rest`) to reduce manual configuration over time. Until then, the
+scoped patterns above are the recommended approach.
+
 ## Shared Request Presets
 
 Define shared request defaults at group/resource scope:
