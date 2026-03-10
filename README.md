@@ -11,10 +11,6 @@ It focuses on:
 - high-signal failure output with request/response context
 - auto-generated `curl` reproduction commands on failures
 
-## Status
-
-The gem is pre-release and in active development toward `0.1.0`.
-
 ## Installation
 
 When published:

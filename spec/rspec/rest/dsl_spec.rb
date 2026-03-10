@@ -58,6 +58,19 @@ RSpec.describe RSpec::Rest do
     { "enabled" => true }
   end
 
+  it "marks expect_json_contract as deprecated" do
+    allow(RSpec::Rest::Deprecation).to receive(:warn)
+
+    expect_json_contract(:user_summary)
+
+    expect(RSpec::Rest::Deprecation).to have_received(:warn).with(
+      hash_including(
+        key: :expect_json_contract,
+        message: /deprecated/
+      )
+    )
+  end
+
   resource "/users" do
     with_headers "X-Resource" => "users"
     with_query include_details: "true"

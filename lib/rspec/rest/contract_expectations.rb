@@ -6,6 +6,12 @@ module RSpec
   module Rest
     module ContractExpectations
       def expect_json_contract(name)
+        Deprecation.warn(
+          key: :expect_json_contract,
+          message: "`expect_json_contract` is deprecated and will be removed in 1.0. " \
+                   "Use `contract(:name)` instead."
+        )
+
         contract_name = normalize_contract_name(name)
         return unknown_contract_matcher(name_error_message(name)) if contract_name.nil?
 
