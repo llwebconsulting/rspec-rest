@@ -36,7 +36,7 @@ RSpec.describe RSpec::Rest do
         expect(error.message).to include("Reproduce with:")
         expect(error.message).to include("curl -X GET")
         expect(error.message).to include("'http://example.org/v1/users'")
-        expect(error.message).to include("-H 'Authorization: [REDACTED]'")
+        expect(error.message).to include("-H \"Authorization: Bearer $API_AUTH_TOKEN\"")
       }
     end
 
