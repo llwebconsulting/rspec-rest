@@ -117,11 +117,44 @@ module RSpec
         end
       end
 
+      module PathArgumentSupport
+        private
+
+        def warn_on_deprecated_positional_path(_method)
+          Deprecation.warn(
+            key: :verb_positional_path,
+            message: "Positional request paths (for example: get(\"/users\")) are deprecated and will be " \
+                     "removed in 1.0. Use keyword paths instead (for example: get(path: \"/users\")). " \
+                     "This avoids RuboCop Rails/HttpPositionalArguments false-positives."
+          )
+        end
+
+        def resolve_path_options(method:, positional_path:, keyword_path:)
+          if !positional_path.nil? && !keyword_path.nil?
+            raise ArgumentError,
+                  "#{method}(...) received both positional and keyword paths. Use only `path:`."
+          end
+
+          effective_path = keyword_path.nil? ? positional_path : keyword_path
+          if effective_path.nil?
+            raise ArgumentError,
+                  "#{method}(...) requires a request path. Pass it as `path:` (preferred) " \
+                  "or as the first positional argument."
+          end
+
+          {
+            path: effective_path,
+            using_positional_path: !positional_path.nil? && keyword_path.nil?
+          }
+        end
+      end
+
       module ClassMethods
         include ClassLevelContracts
         include ClassLevelPresets
         include RouteNamingSupport
         include DescriptionArgumentSupport
+        include PathArgumentSupport
 
         def api(&)
           builder = ApiConfigBuilder.new(rest_config)
@@ -141,25 +174,28 @@ module RSpec
         end
 
         HTTP_METHODS.each do |method|
-          define_method(method) do |path, positional_description = nil, description: nil, &block|
-            description_options = resolve_verb_description_options(method, positional_description, description)
+          define_method(method) do |positional_path = nil, positional_description = nil, path: nil,
+                                    description: nil, &block|
+            path_options, description_options = resolve_verb_options(
+              method, positional_path, path, positional_description, description
+            )
             resource_path = current_resource_path
             request_presets = deep_dup_presets(current_request_presets)
             example_name = build_example_name(
               method: method,
-              path: path,
+              path: path_options[:path],
               resource_path: resource_path,
               description: description_options[:description]
             )
             it(example_name) do
               start_rest_request(
                 method: method,
-                path: path,
+                path: path_options[:path],
                 resource_path: resource_path,
                 presets: request_presets
               )
               instance_eval(&block) if block
-              self.class.send(:emit_positional_description_warning, method, description_options)
+              self.class.send(:emit_verb_deprecation_warnings, method, path_options, description_options)
               execute_rest_request_if_pending
             end
           end
@@ -181,10 +217,29 @@ module RSpec
 
         private
 
+        def emit_verb_deprecation_warnings(method, path_options, description_options)
+          emit_positional_path_warning(method, path_options)
+          emit_positional_description_warning(method, description_options)
+        end
+
+        def emit_positional_path_warning(method, path_options)
+          return unless path_options[:using_positional_path]
+
+          send(:warn_on_deprecated_positional_path, method)
+        end
+
         def emit_positional_description_warning(method, description_options)
           return unless description_options[:using_positional_description]
 
           send(:warn_on_deprecated_positional_description, method)
+        end
+
+        def resolve_verb_path_options(method, positional_path, path)
+          resolve_path_options(
+            method: method,
+            positional_path: positional_path,
+            keyword_path: path
+          )
         end
 
         def resolve_verb_description_options(method, positional_description, description)
@@ -193,6 +248,13 @@ module RSpec
             positional_description: positional_description,
             keyword_description: description
           )
+        end
+
+        def resolve_verb_options(method, positional_path, path, positional_description, description)
+          [
+            resolve_verb_path_options(method, positional_path, path),
+            resolve_verb_description_options(method, positional_description, description)
+          ]
         end
       end
 

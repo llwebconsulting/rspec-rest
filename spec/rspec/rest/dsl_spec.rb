@@ -37,10 +37,35 @@ RSpec.describe RSpec::Rest do
     end.to raise_error(ArgumentError, /must respond to #to_sym/)
   end
 
+  it "raises when both positional and keyword paths are provided" do
+    expect do
+      self.class.get("/", path: "/users")
+    end.to raise_error(ArgumentError, /received both positional and keyword paths/)
+  end
+
+  it "raises when no path is provided" do
+    expect do
+      self.class.get(description: "missing path")
+    end.to raise_error(ArgumentError, /requires a request path/)
+  end
+
   it "raises when both positional and keyword descriptions are provided" do
     expect do
       self.class.get("/", "old style", description: "new style")
     end.to raise_error(ArgumentError, /received both positional and keyword descriptions/)
+  end
+
+  it "emits a deprecation warning for positional request paths" do
+    allow(RSpec::Rest::Deprecation).to receive(:warn)
+
+    self.class.send(:warn_on_deprecated_positional_path, :get)
+
+    expect(RSpec::Rest::Deprecation).to have_received(:warn).with(
+      hash_including(
+        key: :verb_positional_path,
+        message: %r{get\("/users"\).*Rails/HttpPositionalArguments}m
+      )
+    )
   end
 
   it "emits a deprecation warning for positional request descriptions" do
@@ -109,7 +134,7 @@ RSpec.describe RSpec::Rest do
     with_query include_details: "true"
     with_auth "resource-token"
 
-    get "/", description: "  returns users collection  " do
+    get path: "/", description: "  returns users collection  " do
       expect_status 200
       expect_header "content-type", %r{application/json}
       expect_header "Content-Type", "application/json"

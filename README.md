@@ -48,13 +48,13 @@ RSpec.describe "Users API" do
   end
 
   resource "/users" do
-    get "/" do
+    get path: "/" do
       expect_status 200
       expect_header "Content-Type", "application/json"
       expect_json array_of(hash_including("id" => integer, "email" => string))
     end
 
-    post "/" do
+    post path: "/" do
       json "email" => "carl@example.com", "name" => "Carl"
       expect_status 201
       capture :user_id, "$.id"
@@ -112,7 +112,7 @@ RSpec.describe "Posts API" do
   resource "/posts" do
     with_auth auth_token
 
-    get "/", description: "returns posts page 1" do
+    get path: "/", description: "returns posts page 1" do
       query page: 1, per_page: 10
 
       expect_status 200
@@ -152,14 +152,14 @@ RSpec.describe "Posts API" do
   resource "/posts" do
     with_auth auth_token
 
-    get "/" do
+    get path: "/" do
       query page: 1, per_page: 10
       expect_status 200
       expect_json array_of(contract(:post_summary))
       expect_page_size 10
     end
 
-    get "/{id}" do
+    get path: "/{id}" do
       path_params id: 999_999
       expect_error status: 404, message: "Post not found"
     end
@@ -168,7 +168,7 @@ RSpec.describe "Posts API" do
   resource "/uploads" do
     with_auth auth_token
 
-    post "/" do
+    post path: "/" do
       multipart!
       file :file, Rails.root.join("spec/fixtures/files/sample_upload.txt"), content_type: "text/plain"
       expect_status 201
@@ -206,16 +206,17 @@ Supported config:
 
 - `resource "/users" do ... end`
 - `get`, `post`, `put`, `patch`, `delete`
-  - preferred description form: `get(path, description: "...") { ... }`
-  - legacy positional form `get(path, "description")` is deprecated and will be removed in `1.0`.
+  - preferred form: `get(path: "/users", description: "...") { ... }`
+  - legacy positional path form `get("/users", description: "...")` is deprecated and will be removed in `1.0`.
     It is deprecated to avoid `Rails/HttpPositionalArguments` false-positives in RuboCop.
+  - legacy positional description form `get "/users", "description"` is deprecated and will be removed in `1.0`.
 
 Resource paths are composable and support placeholders:
 
 ```ruby
 resource "/users" do
   resource "/{id}/posts" do
-    get "/" do
+    get path: "/" do
       path_params id: 1
       expect_status 404
     end
@@ -227,7 +228,7 @@ Example with an explicit behavior name:
 
 ```ruby
 resource "/users" do
-  get "/", description: "returns public users for authenticated client" do
+  get path: "/", description: "returns public users for authenticated client" do
     expect_status 200
   end
 end
@@ -243,9 +244,8 @@ Note: Example names (including `base_path`) are composed when the verb macro is 
 `rspec-rest` verbs (`get`, `post`, etc.) define examples via DSL macros, and can trigger
 false-positives in some RuboCop cops:
 
-- `Rails/HttpPositionalArguments`: use keyword descriptions (`description:`), not positional descriptions.
+- `Rails/HttpPositionalArguments`: use keyword paths (`path:`) and keyword descriptions (`description:`), not positional arguments.
 - `RSpec/EmptyExampleGroup`: a `context` that only contains `resource` + verb DSL may be flagged as empty.
-
 Recommended mitigation is scoped configuration for files that use `rspec-rest`:
 
 ```yaml
@@ -261,7 +261,7 @@ If you only have a few affected groups, use an inline disable around the DSL gro
 # rubocop:disable RSpec/EmptyExampleGroup
 context "when authenticated" do
   resource "/posts" do
-    get "/", description: "returns posts" do
+    get path: "/", description: "returns posts" do
       expect_status 200
     end
   end
@@ -303,12 +303,12 @@ resource "/posts" do
   with_auth ENV.fetch("API_TOKEN", "token-123")
   with_headers "X-Client" => "mobile"
 
-  get "/" do
+  get path: "/" do
     query page: 2
     expect_status 200
   end
 
-  get "/admin" do
+  get path: "/admin" do
     header "X-Client", "internal-tool" # request-level override
     query locale: "fr"                 # request-level override
     expect_status 200
@@ -333,7 +333,7 @@ Inside verb blocks:
 Example:
 
 ```ruby
-post "/" do
+post path: "/" do
   headers "X-Trace-Id" => "abc-123"
   bearer "token-123"
   query include_details: "true"
@@ -345,7 +345,7 @@ end
 Multipart upload example:
 
 ```ruby
-post "/uploads" do
+post path: "/uploads" do
   multipart!
   file :file, Rails.root.join("spec/fixtures/files/sample_upload.txt"), content_type: "text/plain"
   expect_status 201
@@ -404,7 +404,7 @@ expect_json_last { |item| expect(item["id"]).to integer }
 `expect_error` is a convenience helper for common API error payload assertions:
 
 ```ruby
-get "/{id}" do
+get path: "/{id}" do
   path_params id: 999
   expect_error status: 404, message: "Post not found"
 end
@@ -413,7 +413,7 @@ end
 Pagination helpers:
 
 ```ruby
-get "/" do
+get path: "/" do
   query page: 2, per_page: 10
   expect_status 200
   expect_page_size 10
@@ -436,7 +436,7 @@ contract :post_summary do
   )
 end
 
-get "/" do
+get path: "/" do
   expect_status 200
   expect_json array_of(contract(:post_summary))
 end
@@ -465,7 +465,7 @@ Selector syntax (minimal JSON selector):
 Example:
 
 ```ruby
-post "/" do
+post path: "/" do
   json "email" => "flow@example.com", "name" => "Flow"
   expect_status 201
   capture :user_id, "$.id"
