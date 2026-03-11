@@ -244,10 +244,8 @@ Note: Example names (including `base_path`) are composed when the verb macro is 
 `rspec-rest` verbs (`get`, `post`, etc.) define examples via DSL macros, and can trigger
 false-positives in some RuboCop cops:
 
-- `Rails/HttpPositionalArguments`: use keyword descriptions (`description:`), not positional descriptions.
-- `Rails/HttpPositionalArguments`: use keyword paths (`path:`) and keyword descriptions (`description:`).
+- `Rails/HttpPositionalArguments`: use keyword paths (`path:`) and keyword descriptions (`description:`), not positional arguments.
 - `RSpec/EmptyExampleGroup`: a `context` that only contains `resource` + verb DSL may be flagged as empty.
-
 Recommended mitigation is scoped configuration for files that use `rspec-rest`:
 
 ```yaml
