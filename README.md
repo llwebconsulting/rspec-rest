@@ -209,7 +209,7 @@ Supported config:
   - preferred form: `get(path: "/users", description: "...") { ... }`
   - legacy positional path form `get("/users", description: "...")` is deprecated and will be removed in `1.0`.
     It is deprecated to avoid `Rails/HttpPositionalArguments` false-positives in RuboCop.
-  - legacy positional description form `get(path: "/users", "description")` is deprecated and will be removed in `1.0`.
+  - legacy positional description form `get "/users", "description"` is deprecated and will be removed in `1.0`.
 
 Resource paths are composable and support placeholders:
 
