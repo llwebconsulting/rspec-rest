@@ -7,7 +7,16 @@ Semantic Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+- Verb DSL now supports keyword request paths:
+  - `get path: "/users", description: "..." do ... end`
+  - same keyword `path:` support for `post`, `put`, `patch`, and `delete`.
+
+### Deprecated
+- Positional verb path arguments are deprecated and scheduled for removal in `1.0`:
+  - `get "/users", description: "..." do ... end`
+  Use keyword paths instead:
+  - `get path: "/users", description: "..." do ... end`
 
 ## [0.3.0] - 2026-03-10
 
