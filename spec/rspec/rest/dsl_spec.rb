@@ -249,6 +249,15 @@ RSpec.describe RSpec::Rest do
       )
     end
 
+    get "/1" do
+      expect do
+        expect_json_at(123)
+      end.to raise_error(
+        RSpec::Rest::InvalidJsonSelectorError,
+        /Selector must be a Symbol, a String top-level key, or a JSONPath String/
+      )
+    end
+
     get "/" do
       expect do
         expect_json_item(99)
