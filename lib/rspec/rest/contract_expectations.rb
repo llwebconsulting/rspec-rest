@@ -51,7 +51,7 @@ module RSpec
             )
           end
 
-          validation_error = overrides_builder.validate_keys(key_tree || {}, resolved_overrides)
+          validation_error = overrides_builder.validate_keys(key_tree, resolved_overrides)
           return unknown_contract_matcher(validation_error) unless validation_error.nil?
 
           # Reuse the already-evaluated contract value inside the matcher so the
