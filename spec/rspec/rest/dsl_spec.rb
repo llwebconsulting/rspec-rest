@@ -480,6 +480,12 @@ RSpec.describe RSpec::Rest do
         expect_body_matches(123)
       end.to raise_error(ArgumentError, /requires a String or Regexp pattern/)
     end
+
+    get "" do
+      expect do
+        expect_body_includes(123)
+      end.to raise_error(ArgumentError, /requires a String fragment/)
+    end
   end
 
   resource "/posts" do

@@ -5,7 +5,12 @@ module RSpec
     module BodyExpectations
       def expect_body_includes(fragment)
         with_request_dump_on_failure do
-          expect(rest_response.body).to include(fragment)
+          case fragment
+          when String
+            expect(rest_response.body).to include(fragment)
+          else
+            raise ArgumentError, "expect_body_includes requires a String fragment, got #{fragment.class}"
+          end
         end
       end
 
