@@ -184,6 +184,8 @@ RSpec.describe RSpec::Rest do
     get "/{id}" do
       path_params id: 2
       expect_json_at("$.email", "alex@example.com")
+      expect_json_at(:email, "alex@example.com")
+      expect_json_at("name", "Alex")
       expect_json_at("$.id", integer)
       expect_json_at("$.name") do |value|
         expect(value).to eq("Alex")
@@ -236,6 +238,24 @@ RSpec.describe RSpec::Rest do
       expect do
         expect_json_at("$.not_here")
       end.to raise_error(RSpec::Rest::MissingJsonPathError, /did not match path segment/)
+    end
+
+    get "/1" do
+      expect do
+        expect_json_at("author.id")
+      end.to raise_error(
+        RSpec::Rest::InvalidJsonSelectorError,
+        /Top-level shorthand accepts Symbol or simple String keys/
+      )
+    end
+
+    get "/1" do
+      expect do
+        expect_json_at(123)
+      end.to raise_error(
+        RSpec::Rest::InvalidJsonSelectorError,
+        /Selector must be a Symbol, a String top-level key, or a JSONPath String/
+      )
     end
 
     get "/" do

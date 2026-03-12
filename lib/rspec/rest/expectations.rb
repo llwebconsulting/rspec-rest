@@ -35,12 +35,31 @@ module RSpec
 
       def expect_json_at(selector, expected = nil, &block)
         with_request_dump_on_failure do
-          selected = JsonSelector.extract(rest_response.json, selector)
+          selected = JsonSelector.extract(rest_response.json, normalize_json_selector(selector))
           evaluate_json_value(selected, expected, &block)
         end
       end
 
       private
+
+      def normalize_json_selector(selector)
+        case selector
+        when Symbol
+          "$.#{selector}"
+        when String
+          return selector if selector.start_with?("$")
+          return "$.#{selector}" if selector.match?(/\A[a-zA-Z_][a-zA-Z0-9_]*\z/)
+
+          raise InvalidJsonSelectorError,
+                "Invalid selector #{selector.inspect}. Top-level shorthand accepts Symbol or simple String " \
+                "keys (for example :message or \"message\"). Use JSONPath for nested selectors " \
+                "(for example \"$.items[0].id\")."
+        else
+          raise InvalidJsonSelectorError,
+                "Invalid selector #{selector.inspect}. Selector must be a Symbol, a String top-level key, " \
+                "or a JSONPath String starting with '$'."
+        end
+      end
 
       def evaluate_json_value(value, expected = nil, &block)
         if block
