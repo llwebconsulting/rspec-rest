@@ -12,6 +12,8 @@ Semantic Versioning.
   - Symbol keys (for example `:message`)
   - plain String keys (for example `"message"`)
   Full JSONPath selectors (for example `"$.items[0].id"`) remain supported.
+- `contract_with(:name, overrides)` for contract matcher composition with specific
+  value assertions while preserving the base contract shape/type expectations.
 
 ## [0.4.0] - 2026-03-11
 
