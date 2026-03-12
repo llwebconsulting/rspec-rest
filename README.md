@@ -361,6 +361,7 @@ Available expectation helpers:
 - `expect_header(key, value_or_regex)`
 - `expect_json(expected = nil, &block)`
 - `contract(name)` (lookup helper for reusable JSON contracts)
+- `contract_with(name, overrides)` (contract lookup with value overrides)
 - `expect_json_contract(name)` (deprecated; use `contract(name)`)
 - `expect_json_at(selector, expected = nil, &block)`
 - `expect_json_first(expected = nil, &block)`
@@ -442,8 +443,12 @@ end
 get path: "/" do
   expect_status 200
   expect_json array_of(contract(:post_summary))
+  expect_json array_of(contract_with(:post_summary, id: 1, title: "My Title", author: { id: 1 }))
 end
 ```
+
+Use `contract_with` when you want the base contract shape/types plus specific values
+for selected keys. Override keys must exist in the contract definition.
 
 JSON type helpers:
 

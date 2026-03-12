@@ -102,6 +102,14 @@ RSpec.describe RSpec::Rest do
     { "enabled" => true }
   end
 
+  contract :post_summary do
+    hash_including(
+      "id" => integer,
+      "title" => string,
+      "author" => hash_including("id" => integer)
+    )
+  end
+
   it "marks expect_json_contract as deprecated" do
     allow(RSpec::Rest::Deprecation).to receive(:warn)
 
@@ -127,6 +135,58 @@ RSpec.describe RSpec::Rest do
     expect do
       contract(:inline) { hash_including("id" => integer) }
     end.to raise_error(ArgumentError, /does not accept a block/)
+  end
+
+  it "supports scalar value overrides with contract_with" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 1, "name" => "Carl" },
+      "metadata" => { "ignored" => true }
+    }
+
+    expect(payload).to contract_with(:post_summary, id: 1, title: "My Title")
+  end
+
+  it "supports nested overrides with contract_with" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 7, "name" => "Carl" }
+    }
+
+    expect(payload).to contract_with(:post_summary, author: { id: 7 })
+  end
+
+  it "supports matcher-valued overrides with contract_with" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 9, "name" => "Carl" }
+    }
+
+    expect(payload).to contract_with(:post_summary, title: a_string_matching(/\AMy/))
+  end
+
+  it "supports array composition with contract_with" do
+    payload = [
+      { "id" => 1, "title" => "My Title", "author" => { "id" => 1 } },
+      { "id" => 2, "title" => "My Title", "author" => { "id" => 2 } }
+    ]
+
+    expect(payload).to array_of(contract_with(:post_summary, title: "My Title"))
+  end
+
+  it "raises a clear failure for unknown override keys" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 1 }
+    }
+
+    expect do
+      expect(payload).to contract_with(:post_summary, missing: true)
+    end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /Unknown override key "missing"/)
   end
 
   resource "/users" do
