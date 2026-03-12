@@ -467,6 +467,21 @@ RSpec.describe RSpec::Rest do
     end
   end
 
+  resource "/bad_json" do
+    get "" do
+      expect_status 200
+      expect_body_includes "not json"
+      expect_body_matches(/this is not json/)
+      expect_body_matches "this is not json"
+    end
+
+    get "" do
+      expect do
+        expect_body_matches(123)
+      end.to raise_error(ArgumentError, /requires a String or Regexp pattern/)
+    end
+  end
+
   resource "/posts" do
     get "/" do
       query page: 1, per_page: 2

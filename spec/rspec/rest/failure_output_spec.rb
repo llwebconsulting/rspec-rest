@@ -146,6 +146,21 @@ RSpec.describe RSpec::Rest do
     end
   end
 
+  resource "/bad_json" do
+    get "" do
+      expect do
+        expect_body_includes("definitely missing")
+      end.to raise_error(RSpec::Expectations::ExpectationNotMetError) { |error|
+        expect(error.message).to include("Request:")
+        expect(error.message).to include("GET /v1/bad_json")
+        expect(error.message).to include("Response:")
+        expect(error.message).to include("Status: 200")
+        expect(error.message).to include("Reproduce with:")
+        expect(error.message).to include("curl -X GET")
+      }
+    end
+  end
+
   resource "/posts" do
     get "/" do
       query page: 1, per_page: 2

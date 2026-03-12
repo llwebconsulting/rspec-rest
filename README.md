@@ -364,6 +364,8 @@ Available expectation helpers:
 - `contract_with(name, overrides)` (contract lookup with value overrides)
 - `expect_json_contract(name)` (deprecated; use `contract(name)`)
 - `expect_json_at(selector, expected = nil, &block)`
+- `expect_body_includes(fragment)`
+- `expect_body_matches(pattern)` (`String` or `Regexp`)
 - `expect_json_first(expected = nil, &block)`
 - `expect_json_item(index, expected = nil, &block)`
 - `expect_json_last(expected = nil, &block)`
@@ -403,6 +405,16 @@ For common array-item checks, use Ruby-style helpers instead of selector strings
 expect_json_first hash_including("id" => integer)
 expect_json_item 2, hash_including("name" => "Third")
 expect_json_last { |item| expect(item["id"]).to integer }
+```
+
+Raw body assertions for text/non-JSON endpoints:
+
+```ruby
+get path: "/bad_json" do
+  expect_status 200
+  expect_body_includes "not json"
+  expect_body_matches(/this is not json/)
+end
 ```
 
 `expect_error` is a convenience helper for common API error payload assertions:

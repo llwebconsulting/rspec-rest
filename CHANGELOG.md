@@ -14,6 +14,9 @@ Semantic Versioning.
   Full JSONPath selectors (for example `"$.items[0].id"`) remain supported.
 - `contract_with(:name, overrides)` for contract matcher composition with specific
   value assertions while preserving the base contract shape/type expectations.
+- Raw body expectation helpers for non-JSON/text responses:
+  - `expect_body_includes(fragment)`
+  - `expect_body_matches(pattern)`
 
 ## [0.4.0] - 2026-03-11
 
