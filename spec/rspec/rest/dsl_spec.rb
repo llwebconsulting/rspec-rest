@@ -189,6 +189,45 @@ RSpec.describe RSpec::Rest do
     end.to raise_error(RSpec::Expectations::ExpectationNotMetError, /Unknown override key "missing"/)
   end
 
+  it "raises when both positional and keyword overrides are provided" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 1 }
+    }
+
+    expect do
+      expect(payload).to contract_with(:post_summary, { title: "One" }, title: "Two")
+    end.to raise_error(ArgumentError, /both positional Hash and keyword overrides/)
+  end
+
+  it "raises when overrides is not a Hash" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 1 }
+    }
+
+    expect do
+      expect(payload).to contract_with(:post_summary, 123)
+    end.to raise_error(ArgumentError, /requires overrides to be a Hash/)
+  end
+
+  it "raises a clear failure for nested overrides under a scalar key" do
+    payload = {
+      "id" => 1,
+      "title" => "My Title",
+      "author" => { "id" => 1 }
+    }
+
+    expect do
+      expect(payload).to contract_with(:post_summary, title: { new: "Title" })
+    end.to raise_error(
+      RSpec::Expectations::ExpectationNotMetError,
+      /does not support nested overrides/
+    )
+  end
+
   resource "/users" do
     with_headers "X-Resource" => "users"
     with_query include_details: "true"
