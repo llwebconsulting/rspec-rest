@@ -7,6 +7,8 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-11
+
 ### Added
 - Verb DSL now supports keyword request paths:
   - `get path: "/users", description: "..." do ... end`
