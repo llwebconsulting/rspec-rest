@@ -388,6 +388,9 @@ Available expectation helpers:
   - `expect_json_at "$.user.email", "jane@example.com"`
 - block mode:
   - `expect_json_at "$.items[0]" { |item| expect(item["id"]).to integer }`
+- top-level shorthand:
+  - `expect_json_at :message, "Not found"`
+  - `expect_json_at "message", "Not found"`
 
 For common array-item checks, use Ruby-style helpers instead of selector strings:
 

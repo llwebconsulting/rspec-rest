@@ -7,6 +7,12 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- `expect_json_at` now supports top-level shorthand selectors:
+  - Symbol keys (for example `:message`)
+  - plain String keys (for example `"message"`)
+  Full JSONPath selectors (for example `"$.items[0].id"`) remain supported.
+
 ## [0.4.0] - 2026-03-11
 
 ### Added
