@@ -7,6 +7,8 @@ Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-12
+
 ### Added
 - `expect_json_at` now supports top-level shorthand selectors:
   - Symbol keys (for example `:message`)
