@@ -2,6 +2,7 @@
 
 require_relative "formatters/request_dump"
 require_relative "formatters/request_recorder"
+require_relative "body_expectations"
 require_relative "error_expectations"
 require_relative "contract_expectations"
 require_relative "header_expectations"
@@ -14,6 +15,7 @@ module RSpec
   module Rest
     module Expectations
       include ContractExpectations
+      include BodyExpectations
       include ErrorExpectations
       include HeaderExpectations
       include JsonItemExpectations
