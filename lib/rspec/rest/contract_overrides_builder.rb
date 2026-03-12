@@ -68,10 +68,12 @@ module RSpec
       def extract_contract_hash(value)
         return value if value.is_a?(Hash)
 
-        matcher_name = value.instance_variable_get(:@matcher_name) if value.instance_variable_defined?(:@matcher_name)
+        return nil unless value.respond_to?(:matcher_name) && value.respond_to?(:expecteds)
+
+        matcher_name = value.matcher_name
         return nil unless matcher_name == :a_hash_including
 
-        expecteds = value.instance_variable_get(:@expecteds) if value.instance_variable_defined?(:@expecteds)
+        expecteds = value.expecteds
         return nil unless expecteds.is_a?(Array) && expecteds.first.is_a?(Hash)
 
         expecteds.first
